@@ -5,16 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Network Diagnostics & Speedtest</title>
   <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
 <body>
-  <div class="glow-bg"></div>
+  <div class="glow-bg" aria-hidden="true"></div>
 
   <header>
     <div class="brand">
-      SPEEDTEST <span>PRO</span>
+      <h1>SPEEDTEST <span>PRO</span></h1>
     </div>
-    <div class="status-badge">
-      <div class="status-dot"></div> Online
+    <div class="status-badge" role="status">
+      <div class="status-dot" aria-hidden="true"></div>
+      <span>Online</span>
     </div>
   </header>
 
@@ -22,11 +24,19 @@
     <section class="hud-meta">
       <div class="hud-ip">192.168.1.1</div>
       <div class="hud-isp">
-        Spectrum Gbps Connection
-        <button class="info-btn" onclick="document.querySelector('.drawer').classList.toggle('open')">Details</button>
+        <span>Spectrum Gbps Connection</span>
+        <button 
+          class="info-btn" 
+          id="drawerToggle"
+          type="button"
+          aria-expanded="false" 
+          aria-controls="networkDetails"
+        >
+          Details
+        </button>
       </div>
 
-      <div class="drawer">
+      <div class="drawer" id="networkDetails" aria-hidden="true">
         <div class="drawer-grid">
           <div class="drawer-item">
             <div>Interface</div>
@@ -37,10 +47,10 @@
             <div>192.168.1.254</div>
           </div>
           <div class="drawer-item">
-            <div>DNS Resolver</div>
-            <select class="drawer-select">
-              <option>1.1.1.1 (Cloudflare)</option>
-              <option>8.8.8.8 (Google)</option>
+            <label for="dnsSelect">DNS Resolver</label>
+            <select class="drawer-select" id="dnsSelect">
+              <option value="1.1.1.1">1.1.1.1 (Cloudflare)</option>
+              <option value="8.8.8.8">8.8.8.8 (Google)</option>
             </select>
           </div>
         </div>
@@ -49,43 +59,49 @@
 
     <section class="stage-container" id="stage">
       <div class="go-btn-wrap">
-        <button class="go-btn" id="goBtn">
-          GO
-          <div class="go-sub">START TEST</div>
+        <button class="go-btn" id="goBtn" type="button" aria-label="Start Speedtest">
+          <span>GO</span>
+          <span class="go-sub">START TEST</span>
         </button>
       </div>
 
       <div class="metrics-panel">
-        <div class="metric-card">
-          <div class="metric-title">Download</div>
+        <article class="metric-card">
+          <h2 class="metric-title">Download</h2>
           <div class="metric-val">940.5 <span>Mbps</span></div>
-          <svg class="sparkline-svg" viewBox="0 0 100 40">
+          <svg class="sparkline-svg" viewBox="0 0 100 40" aria-hidden="true" focusable="false">
             <path class="sparkline-path" d="M0 30 Q 25 5, 50 20 T 100 10" />
           </svg>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Upload</div>
+        </article>
+        <article class="metric-card">
+          <h2 class="metric-title">Upload</h2>
           <div class="metric-val">880.2 <span>Mbps</span></div>
-          <svg class="sparkline-svg" viewBox="0 0 100 40">
+          <svg class="sparkline-svg" viewBox="0 0 100 40" aria-hidden="true" focusable="false">
             <path class="sparkline-path" d="M0 35 Q 25 15, 50 25 T 100 5" />
           </svg>
-        </div>
+        </article>
       </div>
     </section>
 
-    <section class="terminal-wrap">
+    <section class="terminal-wrap" aria-labelledby="consoleHeading">
       <div class="terminal-header">
-        <span>CONSOLE LOG</span>
+        <span id="consoleHeading">CONSOLE LOG</span>
         <span>bash</span>
       </div>
-      <textarea class="console" readonly>[INFO] Initializing latency probe...&#10;[INFO] Target connected via eth0.&#10;[INFO] Ready for throughput profiling.</textarea>
+      <textarea 
+        class="console" 
+        readonly 
+        aria-label="Console Log Output"
+      >[INFO] Initializing latency probe...
+[INFO] Target connected via eth0.
+[INFO] Ready for throughput profiling.</textarea>
     </section>
 
     <section class="diag-grid">
       <div class="diag-card">
         <div class="diag-title">
-          <span>Ping Latency</span>
-          <span>Optimal</span>
+          <h2>Ping Latency</h2>
+          <span class="status-tag">Optimal</span>
         </div>
         <div class="ping-row">
           <span>Cloudflare (1.1.1.1)</span>
@@ -98,33 +114,43 @@
       </div>
     </section>
 
-    <section class="fixes-panel show">
+    <section class="fixes-panel show" aria-label="Optimization Toggles">
       <div class="fix-card visible">
         <div class="fix-info">
-          <div class="fix-title">
+          <h3 class="fix-title">
             TCP BBR Congestion Control
             <span class="badge badge-kernel">Kernel</span>
-          </div>
-          <div class="fix-desc">Optimizes throughput and latency under packet loss.</div>
+          </h3>
+          <p class="fix-desc">Optimizes throughput and latency under packet loss.</p>
         </div>
-        <label class="switch">
-          <input type="checkbox" checked>
+        <label class="switch" for="bbrToggle">
+          <input type="checkbox" id="bbrToggle" checked aria-label="Toggle TCP BBR Congestion Control">
           <span class="slider"></span>
         </label>
       </div>
     </section>
 
-    <section class="script-drawer">
+    <section class="script-drawer" aria-labelledby="scriptHeading">
       <div class="script-header">
-        <h3>Network Optimization Script</h3>
+        <h2 id="scriptHeading">Network Optimization Script</h2>
       </div>
-      <div class="tab-container">
-        <button class="tab-btn active">Linux</button>
-        <button class="tab-btn">Windows</button>
+      <div class="tab-container" role="tablist" aria-label="Operating System Selector">
+        <button class="tab-btn active" id="tab-linux" type="button" role="tab" aria-selected="true" aria-controls="tabpanel-script">Linux</button>
+        <button class="tab-btn" id="tab-windows" type="button" role="tab" aria-selected="false" aria-controls="tabpanel-script">Windows</button>
       </div>
-      <textarea class="script-code" readonly># Apply Kernel Optimizations&#10;sysctl -w net.ipv4.tcp_congestion_control=bbr&#10;sysctl -w net.core.rmem_max=16777216</textarea>
-      <button class="btn">Apply Optimizations</button>
-      <button class="btn btn-secondary">Reset</button>
+      <div id="tabpanel-script" role="tabpanel" aria-labelledby="tab-linux">
+        <textarea 
+          class="script-code" 
+          readonly 
+          aria-label="Optimization Script Commands"
+        ># Apply Kernel Optimizations
+sysctl -w net.ipv4.tcp_congestion_control=bbr
+sysctl -w net.core.rmem_max=16777216</textarea>
+      </div>
+      <div class="script-actions">
+        <button type="button" class="btn">Apply Optimizations</button>
+        <button type="button" class="btn btn-secondary">Reset</button>
+      </div>
     </section>
   </main>
 </body>
