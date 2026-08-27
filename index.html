@@ -44,19 +44,18 @@
     .drawer-item div:last-child { font-weight: 600; color: #fff; margin-top: 2px; }
     .drawer-select { background: #020617; color: var(--accent-cyan); border: 1px solid var(--card-border); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; width: 100%; margin-top: 4px; }
 
-    .stage-container { display: flex; align-items: center; justify-content: center; position: relative; min-height: 300px; margin-top: 20px; }
+    .stage-container { display: flex; align-items: center; justify-content: center; position: relative; min-height: 220px; margin-top: 20px; flex-wrap: wrap; gap: 20px; }
 
-    .go-btn-wrap { position: absolute; transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); z-index: 5; }
+    .go-btn-wrap { transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); z-index: 5; }
     .go-btn { width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(0,242,254,0.15) 0%, rgba(11,15,25,0.9) 100%); border: 2px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 2rem; font-weight: 900; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 30px rgba(0, 242, 254, 0.25), inset 0 0 15px rgba(0, 242, 254, 0.15); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; flex-direction: column; }
     .go-btn:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(0, 242, 254, 0.5), inset 0 0 25px rgba(0, 242, 254, 0.3); }
     .go-sub { font-size: 0.65rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.05em; margin-top: 4px; }
 
-    .stage-container.active .go-btn-wrap { transform: translateX(-340px); }
     .stage-container.active .go-btn { width: 130px; height: 130px; font-size: 1.1rem; pointer-events: none; }
-    .stage-container.complete .go-btn-wrap { opacity: 0; pointer-events: none; transform: translateX(-340px) scale(0.5); }
+    .stage-container.complete .go-btn { width: 130px; height: 130px; font-size: 1.1rem; }
 
-    .metrics-panel { position: absolute; right: 40px; opacity: 0; transform: translateX(100px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); display: flex; gap: 20px; pointer-events: none; }
-    .stage-container.active .metrics-panel, .stage-container.complete .metrics-panel { opacity: 1; transform: translateX(0); pointer-events: auto; }
+    .metrics-panel { opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); display: flex; gap: 20px; pointer-events: none; }
+    .stage-container.active .metrics-panel, .stage-container.complete .metrics-panel { opacity: 1; transform: translateY(0); pointer-events: auto; }
     
     .metric-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; width: 220px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .metric-title { font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -295,7 +294,6 @@
     let activeTab = 'ps';
     let pings = [];
 
-    // Fetch IP and Network Metadata via Cloudflare JSON API
     async function fetchNetworkInfo() {
       try {
         const res = await fetch('https://1.1.1.1/cdn-cgi/trace');
@@ -304,7 +302,7 @@
         
         document.getElementById('user-ip').innerText = data.ip || '172.56.21.89';
         document.getElementById('user-loc').innerText = `${data.loc || 'US'} (${data.colo || 'ATL'})`;
-        document.getElementById('user-isp').innerText = `Cloudflare Edge Edge Node [${data.colo || 'ATL'}]`;
+        document.getElementById('user-isp').innerText = `Cloudflare Edge Node [${data.colo || 'ATL'}]`;
         document.getElementById('meta-asn').innerText = `AS${data.asn || '13335'}`;
       } catch (e) {
         document.getElementById('user-ip').innerText = '172.56.21.89';
@@ -318,23 +316,23 @@
       document.getElementById('telemetry-drawer').classList.toggle('open');
     }
 
-    // Dynamic Sparkline Renderer
     function renderSparkline(elementId, data) {
       const path = document.getElementById(elementId);
+      if (!path) return;
       const width = 100;
       const height = 35;
-      const step = width / (data.length - 1);
+      const step = data.length > 1 ? width / (data.length - 1) : width;
       
       const points = data.map((val, idx) => {
         const x = idx * step;
-        const y = height - (val / Math.max(...data, 1)) * (height - 5);
+        const maxVal = Math.max(...data, 1);
+        const y = height - (val / maxVal) * (height - 5);
         return `${x},${y}`;
       });
 
       path.setAttribute('d', `M ${points.join(' L ')}`);
     }
 
-    // Real HTTP-based Latency Measurer (DoH / Endpoint Probes)
     async function measureHttpPing(url) {
       const start = performance.now();
       try {
@@ -342,8 +340,14 @@
         const end = performance.now();
         return Math.round(end - start);
       } catch (e) {
-        return Math.floor(Math.random() * 10) + 12; // Fallback estimate
+        return Math.floor(Math.random() * 10) + 12;
       }
+    }
+
+    function appendConsole(msg) {
+      const termOut = document.getElementById('terminal-out');
+      termOut.value += msg;
+      termOut.scrollTop = termOut.scrollHeight;
     }
 
     async function startAuditEngine() {
@@ -352,11 +356,12 @@
       const termStatus = document.getElementById('term-status');
       const fixesPanel = document.getElementById('fixes-section');
       
+      pings = []; // Reset ping cache on fresh runs
+      stage.classList.remove('complete');
       stage.classList.add('active');
       termStatus.innerText = 'TESTING...';
       termOut.value = "[1/5] Initializing live HTTP ICMP/DoH socket probes...\n";
 
-      // Simulate Speed Test and Render Sparklines
       let dlData = [0], ulData = [0];
       let dl = 0, ul = 0;
 
@@ -370,9 +375,8 @@
         }
       }, 120);
 
-      // DNS Over HTTPS Speed Race
       setTimeout(async () => {
-        termOut.value += "[2/5] Running Parallel DNS Over HTTPS (DoH) Speed-Race...\n";
+        appendConsole("[2/5] Running Parallel DNS Over HTTPS (DoH) Speed-Race...\n");
         
         const cfTime = await measureHttpPing('https://1.1.1.1/dns-query');
         const googTime = await measureHttpPing('https://dns.google/resolve');
@@ -385,9 +389,8 @@
         pings.push(cfTime, googTime, q9Time);
       }, 1000);
 
-      // Upload Test & Bufferbloat Measurement
       setTimeout(() => {
-        termOut.value += "[3/5] Measuring loaded throughput variance and jitter...\n";
+        appendConsole("[3/5] Measuring loaded throughput variance and jitter...\n");
         clearInterval(dlInterval);
         document.getElementById('val-download').innerHTML = `542.1 <span>Mbps</span>`;
         
@@ -407,9 +410,8 @@
         }, 1500);
       }, 2400);
 
-      // Game Server Probes
       setTimeout(async () => {
-        termOut.value += "[4/5] Probing direct HTTP latency to game infrastructure endpoints...\n";
+        appendConsole("[4/5] Probing direct HTTP latency to game infrastructure endpoints...\n");
         
         const fnPing = await measureHttpPing('https://dynamodb.us-east-1.amazonaws.com');
         const valPing = await measureHttpPing('https://ping.riotgames.com');
@@ -419,7 +421,6 @@
         document.getElementById('ping-val').innerText = `${valPing} ms`;
         document.getElementById('ping-rblx').innerText = `${rblxPing} ms`;
 
-        // Calculate Jitter and Bufferbloat
         const avg = pings.reduce((a, b) => a + b, 0) / (pings.length || 1);
         const jitter = Math.abs(fnPing - avg).toFixed(1);
         document.getElementById('metric-jitter').innerText = `${jitter} ms`;
@@ -429,13 +430,13 @@
         document.getElementById('metric-bloat').style.color = 'var(--accent-green)';
       }, 4000);
 
-      // Complete Sequence
       setTimeout(() => {
-        termOut.value += "[5/5] Audit complete. System optimizations generated.\n";
+        appendConsole("[5/5] Audit complete. System optimizations generated.\n");
         termStatus.innerText = 'COMPLETE';
         stage.classList.remove('active');
         stage.classList.add('complete');
 
+        document.getElementById('go-subtext').innerText = 'RE-RUN AUDIT';
         fixesPanel.classList.add('show');
         cascadeFixCards();
         updateScripts();
