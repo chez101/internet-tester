@@ -1,570 +1,607 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NetOptimizer Pro v5.0 Enterprise</title>
-  <style>
-    :root {
-      --bg-dark: #070A11;
-      --card-bg: rgba(15, 23, 42, 0.85);
-      --card-border: rgba(255, 255, 255, 0.1);
-      --accent-cyan: #00F2FE;
-      --accent-blue: #4FACFE;
-      --accent-green: #10B981;
-      --accent-amber: #F59E0B;
-      --accent-red: #EF4444;
-      --text-primary: #F8FAFC;
-      --text-secondary: #94A3B8;
-      --console-bg: #020617;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, sans-serif; }
-    body { background-color: var(--bg-dark); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; display: flex; flex-direction: column; align-items: center; }
-
-    .glow-bg { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: radial-gradient(circle at 50% 30%, rgba(0, 242, 254, 0.08), transparent 60%); pointer-events: none; z-index: 0; }
-
-    header { width: 100%; max-width: 1200px; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
-    .brand { font-size: 1.25rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; letter-spacing: 0.05em; }
-    .brand span { color: var(--accent-cyan); font-size: 0.8rem; border: 1px solid var(--accent-cyan); padding: 2px 8px; border-radius: 4px; }
-    .status-badge { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid var(--accent-green); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
-    .status-dot { width: 8px; height: 8px; background-color: var(--accent-green); border-radius: 50%; box-shadow: 0 0 8px var(--accent-green); }
-
-    main { width: 100%; max-width: 1200px; padding: 0 24px 40px; z-index: 10; flex: 1; display: flex; flex-direction: column; gap: 24px; }
-
-    .hud-meta { text-align: center; margin-top: 10px; transition: all 0.5s ease; }
-    .hud-ip { font-size: 1.8rem; font-weight: 800; background: linear-gradient(90deg, #fff, var(--text-secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .hud-isp { font-size: 0.9rem; color: var(--text-secondary); margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-    .info-btn { cursor: pointer; color: var(--accent-cyan); font-size: 0.85rem; border: none; background: transparent; text-decoration: underline; }
-
-    .drawer { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(15, 23, 42, 0.95); border: 1px solid var(--card-border); border-radius: 12px; margin-top: 12px; }
-    .drawer.open { max-height: 350px; padding: 16px; margin-top: 12px; }
-    .drawer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; font-size: 0.8rem; text-align: left; }
-    .drawer-item div:first-child { color: var(--text-secondary); font-size: 0.7rem; text-transform: uppercase; font-weight: 700; }
-    .drawer-item div:last-child { font-weight: 600; color: #fff; margin-top: 2px; }
-    .drawer-select { background: #020617; color: var(--accent-cyan); border: 1px solid var(--card-border); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; width: 100%; margin-top: 4px; }
-
-    .stage-container { display: flex; align-items: center; justify-content: center; position: relative; min-height: 220px; margin-top: 20px; flex-wrap: wrap; gap: 20px; }
-
-    .go-btn-wrap { transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); z-index: 5; }
-    .go-btn { width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(0,242,254,0.15) 0%, rgba(11,15,25,0.9) 100%); border: 2px solid var(--accent-cyan); color: var(--accent-cyan); font-size: 2rem; font-weight: 900; letter-spacing: 0.1em; cursor: pointer; box-shadow: 0 0 30px rgba(0, 242, 254, 0.25), inset 0 0 15px rgba(0, 242, 254, 0.15); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-    .go-btn:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(0, 242, 254, 0.5), inset 0 0 25px rgba(0, 242, 254, 0.3); }
-    .go-sub { font-size: 0.65rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.05em; margin-top: 4px; }
-
-    .stage-container.active .go-btn { width: 130px; height: 130px; font-size: 1.1rem; pointer-events: none; }
-    .stage-container.complete .go-btn { width: 130px; height: 130px; font-size: 1.1rem; }
-
-    .metrics-panel { opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); display: flex; gap: 20px; pointer-events: none; }
-    .stage-container.active .metrics-panel, .stage-container.complete .metrics-panel { opacity: 1; transform: translateY(0); pointer-events: auto; }
-    
-    .metric-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px; width: 220px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .metric-title { font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
-    .metric-val { font-size: 2.2rem; font-weight: 800; color: #fff; margin: 8px 0; }
-    .metric-val span { font-size: 0.9rem; color: var(--text-secondary); font-weight: 600; }
-    .sparkline-svg { width: 100%; height: 40px; }
-    .sparkline-path { stroke: var(--accent-cyan); fill: none; stroke-width: 2; transition: all 0.1s ease; }
-
-    .terminal-wrap { opacity: 0; transform: translateY(40px); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); background: var(--console-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
-    .stage-container.active ~ .terminal-wrap, .stage-container.complete ~ .terminal-wrap { opacity: 1; transform: translateY(0); }
-    .terminal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; margin-bottom: 10px; font-size: 0.75rem; color: var(--text-secondary); font-family: monospace; }
-    textarea.console { width: 100%; height: 110px; background: transparent; border: none; color: var(--accent-cyan); font-family: 'Consolas', monospace; font-size: 0.8rem; resize: none; outline: none; line-height: 1.5; }
-
-    .diag-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px; }
-    .diag-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; backdrop-filter: blur(10px); }
-    .diag-title { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; justify-content: space-between; }
-    .ping-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
-    .ping-row span:last-child { font-weight: 700; color: var(--accent-cyan); }
-
-    .fixes-panel { display: none; opacity: 0; transform: translateY(50px); transition: all 0.8s ease; margin-top: 20px; }
-    .fixes-panel.show { display: block; opacity: 1; transform: translateY(0); }
-    
-    .fix-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; opacity: 0; transform: translateY(20px); transition: all 0.5s ease; backdrop-filter: blur(10px); }
-    .fix-card.visible { opacity: 1; transform: translateY(0); }
-    .fix-info { display: flex; flex-direction: column; gap: 4px; }
-    .fix-title { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-    .fix-desc { font-size: 0.8rem; color: var(--text-secondary); }
-
-    .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
-    .badge-major { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); border: 1px solid var(--accent-red); }
-    .badge-minor { background: rgba(245, 158, 11, 0.2); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
-    .badge-minimal { background: rgba(16, 185, 129, 0.2); color: var(--accent-green); border: 1px solid var(--accent-green); }
-    .badge-kernel { background: rgba(0, 242, 254, 0.2); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
-
-    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .3s; border-radius: 24px; border: 1px solid var(--card-border); }
-    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-    input:checked + .slider { background-color: var(--accent-cyan); }
-    input:checked + .slider:before { transform: translateX(20px); background-color: #000; }
-
-    .script-drawer { background: var(--console-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; margin-top: 24px; }
-    .script-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .script-header h3 { font-size: 0.9rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
-    
-    .tab-container { display: flex; gap: 8px; margin-bottom: 12px; }
-    .tab-btn { background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--card-border); padding: 6px 16px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
-    .tab-btn.active { background: var(--accent-cyan); color: #000; border-color: var(--accent-cyan); }
-
-    textarea.script-code { width: 100%; height: 200px; background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); color: #38BDF8; font-family: 'Consolas', monospace; font-size: 0.8rem; padding: 12px; border-radius: 8px; resize: vertical; outline: none; margin-bottom: 12px; line-height: 1.4; }
-    
-    .btn { background: var(--accent-cyan); color: #000; border: none; padding: 10px 20px; font-weight: 800; font-size: 0.85rem; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; }
-    .btn:hover { background: var(--accent-blue); color: #fff; box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); }
-    .btn-secondary { background: var(--card-border); color: #fff; }
-    .btn-secondary:hover { background: #334155; }
-  </style>
-</head>
-<body>
-
-  <div class="glow-bg"></div>
-
-  <header>
-    <div class="brand">⚡ NETOPTIMIZER <span>PRO v5.0</span></div>
-    <div class="status-badge">
-      <div class="status-dot"></div>
-      DOH REALTIME ENGINE ACTIVE
-    </div>
-  </header>
-
-  <main>
-
-    <section class="hud-meta">
-      <div class="hud-ip" id="user-ip">FETCHING...</div>
-      <div class="hud-isp">
-        <span id="user-isp">Detecting Network...</span> • <span id="user-loc">Locating...</span>
-        <button class="info-btn" onclick="toggleDrawer()">[NIC Telemetry]</button>
-      </div>
-
-      <div class="drawer" id="telemetry-drawer">
-        <div class="drawer-grid">
-          <div class="drawer-item"><div>ASN / Organization</div><div id="meta-asn">--</div></div>
-          <div class="drawer-item"><div>Local Gateway</div><div id="meta-gw">192.168.1.1</div></div>
-          <div class="drawer-item">
-            <div>Active Adapter</div>
-            <select class="drawer-select" id="nic-select">
-              <option>Intel Wi-Fi 6E AX211 160MHz</option>
-              <option>Realtek Gaming 2.5GbE Family Controller</option>
-              <option>Virtual Adapter (TAP-Windows)</option>
-            </select>
-          </div>
-          <div class="drawer-item"><div>Link Speed</div><div id="meta-link">2400 Mbps</div></div>
-          <div class="drawer-item"><div>Optimal MTU</div><div id="meta-mtu">1500 Bytes</div></div>
-          <div class="drawer-item"><div>Protocol Type</div><div id="meta-type">IPv4 / IPv6 Dual-Stack</div></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="stage-container" id="stage">
-      
-      <div class="go-btn-wrap">
-        <button class="go-btn" id="btn-go" onclick="startAuditEngine()">
-          GO
-          <span class="go-sub" id="go-subtext">RUN DIAGNOSTICS</span>
-        </button>
-      </div>
-
-      <div class="metrics-panel">
-        <div class="metric-card">
-          <div class="metric-title">Download</div>
-          <div class="metric-val" id="val-download">0.0 <span>Mbps</span></div>
-          <svg class="sparkline-svg"><path class="sparkline-path" id="spark-dl" d="M0,35 L100,35"/></svg>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Upload</div>
-          <div class="metric-val" id="val-upload">0.0 <span>Mbps</span></div>
-          <svg class="sparkline-svg"><path class="sparkline-path" id="spark-ul" d="M0,35 L100,35" stroke="#4FACFE"/></svg>
-        </div>
-      </div>
-
-    </section>
-
-    <div class="terminal-wrap">
-      <div class="terminal-header">
-        <span>REALTIME_DIAGNOSTICS_LOG // CORE_V5</span>
-        <span id="term-status" style="color: var(--accent-cyan)">IDLE</span>
-      </div>
-      <textarea class="console" id="terminal-out" readonly>System ready. Click GO to initialize DoH DNS probing, game socket pings, and dynamic kernel script generation...</textarea>
-    </div>
-
-    <div class="diag-grid">
-      <div class="diag-card">
-        <div class="diag-title">🎮 Game Endpoint Latency <span>Direct HTTP Probe</span></div>
-        <div class="ping-row"><span>Fortnite (AWS US-East)</span><span id="ping-fn">-- ms</span></div>
-        <div class="ping-row"><span>Valorant (Riot US-East)</span><span id="ping-val">-- ms</span></div>
-        <div class="ping-row"><span>Roblox (US East Node)</span><span id="ping-rblx">-- ms</span></div>
-      </div>
-
-      <div class="diag-card">
-        <div class="diag-title">🌐 Live DNS Over HTTPS (DoH) <span>Resolver Benchmark</span></div>
-        <div class="ping-row"><span>Cloudflare (1.1.1.1)</span><span id="dns-cf">-- ms</span></div>
-        <div class="ping-row"><span>Google (8.8.8.8)</span><span id="dns-goog">-- ms</span></div>
-        <div class="ping-row"><span>Quad9 (9.9.9.9)</span><span id="dns-q9">-- ms</span></div>
-      </div>
-
-      <div class="diag-card">
-        <div class="diag-title">📊 Network Health Metrics <span>Calculated</span></div>
-        <div class="ping-row"><span>Bufferbloat Grade</span><span id="metric-bloat" style="color:var(--text-secondary)">Unchecked</span></div>
-        <div class="ping-row"><span>Jitter Variance</span><span id="metric-jitter">-- ms</span></div>
-        <div class="ping-row"><span>Estimated Packet Loss</span><span id="metric-loss" style="color:var(--accent-green)">0.0%</span></div>
-      </div>
-    </div>
-
-    <section class="fixes-panel" id="fixes-section">
-      <h2 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
-        🛠️ Recommended System Fixes & Kernel Optimizations
-      </h2>
-
-      <div class="fix-card" id="fix-1">
-        <div class="fix-info">
-          <div class="fix-title"><span class="badge badge-major">Major Fix</span> Disable Nagle's Algorithm</div>
-          <div class="fix-desc">Eliminates 200ms TCP packet buffering delays for gaming sockets (TcpAckFrequency & TCPNoDelay).</div>
-        </div>
-        <label class="switch"><input type="checkbox" id="chk-nagle" checked onchange="updateScripts()"><span class="slider"></span></label>
-      </div>
-
-      <div class="fix-card" id="fix-2">
-        <div class="fix-info">
-          <div class="fix-title"><span class="badge badge-major">Major Fix</span> Disable Network Throttling Index</div>
-          <div class="fix-desc">Overrides NetworkThrottlingIndex (0xFFFFFFFF) to prevent Windows from limiting non-multimedia traffic.</div>
-        </div>
-        <label class="switch"><input type="checkbox" id="chk-throttle" checked onchange="updateScripts()"><span class="slider"></span></label>
-      </div>
-
-      <div class="fix-card" id="fix-3">
-        <div class="fix-info">
-          <div class="fix-title"><span class="badge badge-major">Major Fix</span> Disable Large Send Offload (LSO)</div>
-          <div class="fix-desc">Prevents network driver CPU overhead and high-throughput micro-stutters.</div>
-        </div>
-        <label class="switch"><input type="checkbox" id="chk-lso" checked onchange="updateScripts()"><span class="slider"></span></label>
-      </div>
-
-      <div class="fix-card" id="fix-4">
-        <div class="fix-info">
-          <div class="fix-title"><span class="badge badge-minor">Minor Fix</span> Switch to Cloudflare DoH & Flush DNS</div>
-          <div class="fix-desc">Sets secure 1.1.1.1 DNS over HTTPS and purges stale resolver caches.</div>
-        </div>
-        <label class="switch"><input type="checkbox" id="chk-doh" checked onchange="updateScripts()"><span class="slider"></span></label>
-      </div>
-
-      <div class="fix-card" id="fix-5">
-        <div class="fix-info">
-          <div class="fix-title"><span class="badge badge-minor">Minor Fix</span> Disable Receive Side Coalescing (RSC)</div>
-          <div class="fix-desc">Forces Disable-NetAdapterRsc to reduce latency spikes during packet processing.</div>
-        </div>
-        <label class="switch"><input type="checkbox" id="chk-rsc" checked onchange="updateScripts()"><span class="slider"></span></label>
-      </div>
-
-      <div class="fix-card" id="fix-6">
-        <div class="fix-info">
-          <div class="fix-title"><span class="badge badge-minimal">Minimal Fix</span> Disable Energy Efficient Ethernet (EEE)</div>
-          <div class="fix-desc">Stops physical PHY NICs from dropping into low-power sleep states.</div>
-        </div>
-        <label class="switch"><input type="checkbox" id="chk-eee" checked onchange="updateScripts()"><span class="slider"></span></label>
-      </div>
-
-      <div class="fix-card" id="fix-7">
-        <div class="fix-info">
-          <div class="fix-title"><span class="badge badge-kernel">Kernel Tweak</span> Enable TCP CUBIC / BBR Congestion Control</div>
-          <div class="fix-desc">Applies optimized congestion providers for high-speed packet window scaling.</div>
-        </div>
-        <label class="switch"><input type="checkbox" id="chk-cubic" checked onchange="updateScripts()"><span class="slider"></span></label>
-      </div>
-
-      <div class="script-drawer">
-        <div class="script-header">
-          <h3>💻 Generated Kernel Optimization Script</h3>
-          <span style="font-size: 0.75rem; color: var(--accent-green);">✓ Cross-Platform Code Generator</span>
-        </div>
-
-        <div class="tab-container">
-          <button class="tab-btn active" id="tab-powershell" onclick="switchTab('ps')">Windows PowerShell (.ps1)</button>
-          <button class="tab-btn" id="tab-bash" onclick="switchTab('sh')">Linux Shell (.sh)</button>
-        </div>
-
-        <textarea class="script-code" id="script-output" readonly></textarea>
-        <div style="display: flex; gap: 10px;">
-          <button class="btn" onclick="copyScript()">📋 Copy Script to Clipboard</button>
-          <button class="btn btn-secondary" onclick="downloadScript()">💾 Download File</button>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <script>
-    let activeTab = 'ps';
-    let pings = [];
-
-    async function fetchNetworkInfo() {
-      try {
-        const res = await fetch('https://1.1.1.1/cdn-cgi/trace');
-        const text = await res.text();
-        const data = Object.fromEntries(text.trim().split('\n').map(line => line.split('=')));
-        
-        document.getElementById('user-ip').innerText = data.ip || '172.56.21.89';
-        document.getElementById('user-loc').innerText = `${data.loc || 'US'} (${data.colo || 'ATL'})`;
-        document.getElementById('user-isp').innerText = `Cloudflare Edge Node [${data.colo || 'ATL'}]`;
-        document.getElementById('meta-asn').innerText = `AS${data.asn || '13335'}`;
-      } catch (e) {
-        document.getElementById('user-ip').innerText = '172.56.21.89';
-        document.getElementById('user-isp').innerText = 'Spectrum Communications';
-        document.getElementById('user-loc').innerText = 'Tampa, FL';
-        document.getElementById('meta-asn').innerText = 'AS11486';
-      }
-    }
-
-    function toggleDrawer() {
-      document.getElementById('telemetry-drawer').classList.toggle('open');
-    }
-
-    function renderSparkline(elementId, data) {
-      const path = document.getElementById(elementId);
-      if (!path) return;
-      const width = 100;
-      const height = 35;
-      const step = data.length > 1 ? width / (data.length - 1) : width;
-      
-      const points = data.map((val, idx) => {
-        const x = idx * step;
-        const maxVal = Math.max(...data, 1);
-        const y = height - (val / maxVal) * (height - 5);
-        return `${x},${y}`;
-      });
-
-      path.setAttribute('d', `M ${points.join(' L ')}`);
-    }
-
-    async function measureHttpPing(url) {
-      const start = performance.now();
-      try {
-        await fetch(url, { mode: 'no-cors', cache: 'no-store' });
-        const end = performance.now();
-        return Math.round(end - start);
-      } catch (e) {
-        return Math.floor(Math.random() * 10) + 12;
-      }
-    }
-
-    function appendConsole(msg) {
-      const termOut = document.getElementById('terminal-out');
-      termOut.value += msg;
-      termOut.scrollTop = termOut.scrollHeight;
-    }
-
-    async function startAuditEngine() {
-      const stage = document.getElementById('stage');
-      const termOut = document.getElementById('terminal-out');
-      const termStatus = document.getElementById('term-status');
-      const fixesPanel = document.getElementById('fixes-section');
-      
-      pings = []; // Reset ping cache on fresh runs
-      stage.classList.remove('complete');
-      stage.classList.add('active');
-      termStatus.innerText = 'TESTING...';
-      termOut.value = "[1/5] Initializing live HTTP ICMP/DoH socket probes...\n";
-
-      let dlData = [0], ulData = [0];
-      let dl = 0, ul = 0;
-
-      const dlInterval = setInterval(() => {
-        if (dl < 520) {
-          dl += Math.floor(Math.random() * 50) + 15;
-          dlData.push(dl);
-          if (dlData.length > 10) dlData.shift();
-          document.getElementById('val-download').innerHTML = `${dl} <span>Mbps</span>`;
-          renderSparkline('spark-dl', dlData);
-        }
-      }, 120);
-
-      setTimeout(async () => {
-        appendConsole("[2/5] Running Parallel DNS Over HTTPS (DoH) Speed-Race...\n");
-        
-        const cfTime = await measureHttpPing('https://1.1.1.1/dns-query');
-        const googTime = await measureHttpPing('https://dns.google/resolve');
-        const q9Time = await measureHttpPing('https://dns.quad9.net:5053/dns-query');
-
-        document.getElementById('dns-cf').innerText = `${cfTime} ms`;
-        document.getElementById('dns-goog').innerText = `${googTime} ms`;
-        document.getElementById('dns-q9').innerText = `${q9Time} ms`;
-
-        pings.push(cfTime, googTime, q9Time);
-      }, 1000);
-
-      setTimeout(() => {
-        appendConsole("[3/5] Measuring loaded throughput variance and jitter...\n");
-        clearInterval(dlInterval);
-        document.getElementById('val-download').innerHTML = `542.1 <span>Mbps</span>`;
-        
-        const ulInterval = setInterval(() => {
-          if (ul < 140) {
-            ul += Math.floor(Math.random() * 25) + 10;
-            ulData.push(ul);
-            if (ulData.length > 10) ulData.shift();
-            document.getElementById('val-upload').innerHTML = `${ul} <span>Mbps</span>`;
-            renderSparkline('spark-ul', ulData);
-          }
-        }, 120);
-
-        setTimeout(() => {
-          clearInterval(ulInterval);
-          document.getElementById('val-upload').innerHTML = `148.5 <span>Mbps</span>`;
-        }, 1500);
-      }, 2400);
-
-      setTimeout(async () => {
-        appendConsole("[4/5] Probing direct HTTP latency to game infrastructure endpoints...\n");
-        
-        const fnPing = await measureHttpPing('https://dynamodb.us-east-1.amazonaws.com');
-        const valPing = await measureHttpPing('https://ping.riotgames.com');
-        const rblxPing = await measureHttpPing('https://www.roblox.com');
-
-        document.getElementById('ping-fn').innerText = `${fnPing} ms`;
-        document.getElementById('ping-val').innerText = `${valPing} ms`;
-        document.getElementById('ping-rblx').innerText = `${rblxPing} ms`;
-
-        const avg = pings.reduce((a, b) => a + b, 0) / (pings.length || 1);
-        const jitter = Math.abs(fnPing - avg).toFixed(1);
-        document.getElementById('metric-jitter').innerText = `${jitter} ms`;
-        
-        const bloatGrade = jitter < 5 ? 'Grade A+' : jitter < 15 ? 'Grade A' : 'Grade B';
-        document.getElementById('metric-bloat').innerText = bloatGrade;
-        document.getElementById('metric-bloat').style.color = 'var(--accent-green)';
-      }, 4000);
-
-      setTimeout(() => {
-        appendConsole("[5/5] Audit complete. System optimizations generated.\n");
-        termStatus.innerText = 'COMPLETE';
-        stage.classList.remove('active');
-        stage.classList.add('complete');
-
-        document.getElementById('go-subtext').innerText = 'RE-RUN AUDIT';
-        fixesPanel.classList.add('show');
-        cascadeFixCards();
-        updateScripts();
-      }, 5500);
-    }
-
-    function cascadeFixCards() {
-      const cards = document.querySelectorAll('.fix-card');
-      cards.forEach((card, idx) => {
-        setTimeout(() => {
-          card.classList.add('visible');
-        }, idx * 80);
-      });
-    }
-
-    function switchTab(type) {
-      activeTab = type;
-      document.getElementById('tab-powershell').classList.toggle('active', type === 'ps');
-      document.getElementById('tab-bash').classList.toggle('active', type === 'sh');
-      updateScripts();
-    }
-
-    function updateScripts() {
-      if (activeTab === 'ps') {
-        buildPowerShell();
-      } else {
-        buildBashScript();
-      }
-    }
-
-    function buildPowerShell() {
-      let ps = "# ==========================================================\n";
-      ps += "# NETOPTIMIZER PRO v5.0 - AUTOMATED POWERSHELL SCRIPT\n";
-      ps += "# ==========================================================\n\n";
-      ps += "Checkpoint-Computer -Description 'NetOptimizer_v5_Backup' -RestorePointType 'MODIFY_SETTINGS'\n\n";
-
-      if(document.getElementById('chk-nagle')?.checked) {
-        ps += "# Disable Nagle's Algorithm\n";
-        ps += "Set-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\*' -Name 'TcpAckFrequency' -Value 1 -ErrorAction SilentlyContinue\n";
-        ps += "Set-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\*' -Name 'TCPNoDelay' -Value 1 -ErrorAction SilentlyContinue\n\n";
-      }
-
-      if(document.getElementById('chk-throttle')?.checked) {
-        ps += "# Disable Network Throttling Index\n";
-        ps += "Set-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile' -Name 'NetworkThrottlingIndex' -Value 0xFFFFFFFF -ErrorAction SilentlyContinue\n";
-        ps += "Set-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile' -Name 'SystemResponsiveness' -Value 0 -ErrorAction SilentlyContinue\n\n";
-      }
-
-      if(document.getElementById('chk-lso')?.checked) {
-        ps += "# Disable Large Send Offload (LSO)\n";
-        ps += "Disable-NetAdapterLso -Name * -ErrorAction SilentlyContinue\n\n";
-      }
-
-      if(document.getElementById('chk-doh')?.checked) {
-        ps += "# Set Cloudflare DoH & Flush DNS\n";
-        ps += "Set-DnsClientServerAddress -InterfaceAlias '*' -ServerAddresses ('1.1.1.1','1.0.0.1')\n";
-        ps += "Clear-DnsClientCache\n\n";
-      }
-
-      if(document.getElementById('chk-rsc')?.checked) {
-        ps += "# Disable Receive Side Coalescing (RSC)\n";
-        ps += "Disable-NetAdapterRsc -Name * -ErrorAction SilentlyContinue\n\n";
-      }
-
-      if(document.getElementById('chk-eee')?.checked) {
-        ps += "# Disable Energy Efficient Ethernet\n";
-        ps += "Set-NetAdapterAdvancedProperty -Name * -DisplayName 'Energy Efficient Ethernet' -DisplayValue 'Disabled' -ErrorAction SilentlyContinue\n\n";
-      }
-
-      if(document.getElementById('chk-cubic')?.checked) {
-        ps += "# Enable TCP CUBIC Congestion Provider\n";
-        ps += "Set-NetTCPSetting -SettingName 'InternetCustom' -CongestionProvider CUBIC -ErrorAction SilentlyContinue\n";
-      }
-
-      document.getElementById('script-output').value = ps;
-    }
-
-    function buildBashScript() {
-      let sh = "#!/bin/bash\n";
-      sh += "# ==========================================================\n";
-      sh += "# NETOPTIMIZER PRO v5.0 - LINUX KERNEL SYSCTL OPTIMIZER\n";
-      sh += "# ==========================================================\n\n";
-
-      if(document.getElementById('chk-cubic')?.checked) {
-        sh += "# Enable TCP BBR / CUBIC Congestion Control\n";
-        sh += "sysctl -w net.ipv4.tcp_congestion_control=cubic\n";
-        sh += "sysctl -w net.core.default_qdisc=fq\n\n";
-      }
-
-      if(document.getElementById('chk-nagle')?.checked) {
-        sh += "# Reduce Low Latency TCP Ack Delays\n";
-        sh += "sysctl -w net.ipv4.tcp_low_latency=1\n\n";
-      }
-
-      if(document.getElementById('chk-doh')?.checked) {
-        sh += "# Set Cloudflare Resolvers in systemd-resolved\n";
-        sh += "echo 'nameserver 1.1.1.1' | sudo tee /etc/resolv.conf\n";
-        sh += "resolvectl flush-caches\n\n";
-      }
-
-      if(document.getElementById('chk-lso')?.checked) {
-        sh += "# Disable Offloading via Ethtool\n";
-        sh += "ethtool -K eth0 tso off gso off gro off\n";
-      }
-
-      document.getElementById('script-output').value = sh;
-    }
-
-    function copyScript() {
-      const code = document.getElementById('script-output');
-      code.select();
-      navigator.clipboard.writeText(code.value);
-      alert('Optimization script copied to clipboard!');
-    }
-
-    function downloadScript() {
-      const ext = activeTab === 'ps' ? 'ps1' : 'sh';
-      const blob = new Blob([document.getElementById('script-output').value], { type: 'text/plain' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `NetOptimizer_v5_Fixes.${ext}`;
-      a.click();
-    }
-
-    window.onload = () => {
-      fetchNetworkInfo();
-      buildPowerShell();
-    };
-  </script>
-</body>
-</html>
+:root {
+  --bg-dark: #070A11;
+  --card-bg: rgba(15, 23, 42, 0.85);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --accent-cyan: #00F2FE;
+  --accent-blue: #4FACFE;
+  --accent-green: #10B981;
+  --accent-amber: #F59E0B;
+  --accent-red: #EF4444;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --console-bg: #020617;
+}
+
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+  font-family: 'Segoe UI', -apple-system, sans-serif; 
+}
+
+body { 
+  background-color: var(--bg-dark); 
+  color: var(--text-primary); 
+  min-height: 100vh; 
+  overflow-x: hidden; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+}
+
+.glow-bg { 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100vw; 
+  height: 100vh; 
+  background: radial-gradient(circle at 50% 30%, rgba(0, 242, 254, 0.08), transparent 60%); 
+  pointer-events: none; 
+  z-index: 0; 
+}
+
+header { 
+  width: 100%; 
+  max-width: 1200px; 
+  padding: 20px 24px; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  z-index: 10; 
+}
+
+.brand { 
+  font-size: 1.25rem; 
+  font-weight: 800; 
+  color: #fff; 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  letter-spacing: 0.05em; 
+}
+
+.brand span { 
+  color: var(--accent-cyan); 
+  font-size: 0.8rem; 
+  border: 1px solid var(--accent-cyan); 
+  padding: 2px 8px; 
+  border-radius: 4px; 
+}
+
+.status-badge { 
+  background: rgba(16, 185, 129, 0.1); 
+  color: var(--accent-green); 
+  border: 1px solid var(--accent-green); 
+  padding: 4px 10px; 
+  border-radius: 20px; 
+  font-size: 0.75rem; 
+  font-weight: 700; 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+}
+
+.status-dot { 
+  width: 8px; 
+  height: 8px; 
+  background-color: var(--accent-green); 
+  border-radius: 50%; 
+  box-shadow: 0 0 8px var(--accent-green); 
+}
+
+main { 
+  width: 100%; 
+  max-width: 1200px; 
+  padding: 0 24px 40px; 
+  z-index: 10; 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 24px; 
+}
+
+.hud-meta { 
+  text-align: center; 
+  margin-top: 10px; 
+  transition: all 0.5s ease; 
+}
+
+.hud-ip { 
+  font-size: 1.8rem; 
+  font-weight: 800; 
+  background: linear-gradient(90deg, #fff, var(--text-secondary)); 
+  -webkit-background-clip: text; 
+  -webkit-text-fill-color: transparent; 
+}
+
+.hud-isp { 
+  font-size: 0.9rem; 
+  color: var(--text-secondary); 
+  margin-top: 4px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: 8px; 
+}
+
+.info-btn { 
+  cursor: pointer; 
+  color: var(--accent-cyan); 
+  font-size: 0.85rem; 
+  border: none; 
+  background: transparent; 
+  text-decoration: underline; 
+}
+
+.drawer { 
+  max-height: 0; 
+  overflow: hidden; 
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+  background: rgba(15, 23, 42, 0.95); 
+  border: 1px solid var(--card-border); 
+  border-radius: 12px; 
+  margin-top: 12px; 
+}
+
+.drawer.open { 
+  max-height: 350px; 
+  padding: 16px; 
+  margin-top: 12px; 
+}
+
+.drawer-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+  gap: 12px; 
+  font-size: 0.8rem; 
+  text-align: left; 
+}
+
+.drawer-item div:first-child { 
+  color: var(--text-secondary); 
+  font-size: 0.7rem; 
+  text-transform: uppercase; 
+  font-weight: 700; 
+}
+
+.drawer-item div:last-child { 
+  font-weight: 600; 
+  color: #fff; 
+  margin-top: 2px; 
+}
+
+.drawer-select { 
+  background: #020617; 
+  color: var(--accent-cyan); 
+  border: 1px solid var(--card-border); 
+  padding: 4px 8px; 
+  border-radius: 4px; 
+  font-size: 0.8rem; 
+  width: 100%; 
+  margin-top: 4px; 
+}
+
+.stage-container { 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  position: relative; 
+  min-height: 220px; 
+  margin-top: 20px; 
+  flex-wrap: wrap; 
+  gap: 20px; 
+}
+
+.go-btn-wrap { 
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); 
+  z-index: 5; 
+}
+
+.go-btn { 
+  width: 180px; 
+  height: 180px; 
+  border-radius: 50%; 
+  background: radial-gradient(circle, rgba(0,242,254,0.15) 0%, rgba(11,15,25,0.9) 100%); 
+  border: 2px solid var(--accent-cyan); 
+  color: var(--accent-cyan); 
+  font-size: 2rem; 
+  font-weight: 900; 
+  letter-spacing: 0.1em; 
+  cursor: pointer; 
+  box-shadow: 0 0 30px rgba(0, 242, 254, 0.25), inset 0 0 15px rgba(0, 242, 254, 0.15); 
+  transition: all 0.3s ease; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  flex-direction: column; 
+}
+
+.go-btn:hover { 
+  transform: scale(1.05); 
+  box-shadow: 0 0 50px rgba(0, 242, 254, 0.5), inset 0 0 25px rgba(0, 242, 254, 0.3); 
+}
+
+.go-sub { 
+  font-size: 0.65rem; 
+  font-weight: 600; 
+  color: var(--text-secondary); 
+  letter-spacing: 0.05em; 
+  margin-top: 4px; 
+}
+
+.stage-container.active .go-btn,
+.stage-container.complete .go-btn { 
+  width: 130px; 
+  height: 130px; 
+  font-size: 1.1rem; 
+}
+
+.stage-container.active .go-btn { 
+  pointer-events: none; 
+}
+
+.metrics-panel { 
+  opacity: 0; 
+  transform: translateY(20px); 
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); 
+  display: flex; 
+  gap: 20px; 
+  pointer-events: none; 
+}
+
+.stage-container.active .metrics-panel, 
+.stage-container.complete .metrics-panel { 
+  opacity: 1; 
+  transform: translateY(0); 
+  pointer-events: auto; 
+}
+
+.metric-card { 
+  background: var(--card-bg); 
+  border: 1px solid var(--card-border); 
+  border-radius: 16px; 
+  padding: 20px; 
+  width: 220px; 
+  backdrop-filter: blur(12px); 
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+}
+
+.metric-title { 
+  font-size: 0.75rem; 
+  font-weight: 700; 
+  color: var(--text-secondary); 
+  text-transform: uppercase; 
+  letter-spacing: 0.05em; 
+}
+
+.metric-val { 
+  font-size: 2.2rem; 
+  font-weight: 800; 
+  color: #fff; 
+  margin: 8px 0; 
+}
+
+.metric-val span { 
+  font-size: 0.9rem; 
+  color: var(--text-secondary); 
+  font-weight: 600; 
+}
+
+.sparkline-svg { 
+  width: 100%; 
+  height: 40px; 
+}
+
+.sparkline-path { 
+  stroke: var(--accent-cyan); 
+  fill: none; 
+  stroke-width: 2; 
+  transition: all 0.1s ease; 
+}
+
+.terminal-wrap { 
+  opacity: 0; 
+  transform: translateY(40px); 
+  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); 
+  background: var(--console-bg); 
+  border: 1px solid var(--card-border); 
+  border-radius: 12px; 
+  padding: 16px; 
+  width: 100%; 
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
+}
+
+.stage-container.active ~ .terminal-wrap, 
+.stage-container.complete ~ .terminal-wrap { 
+  opacity: 1; 
+  transform: translateY(0); 
+}
+
+.terminal-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  border-bottom: 1px solid var(--card-border); 
+  padding-bottom: 8px; 
+  margin-bottom: 10px; 
+  font-size: 0.75rem; 
+  color: var(--text-secondary); 
+  font-family: monospace; 
+}
+
+textarea.console { 
+  width: 100%; 
+  height: 110px; 
+  background: transparent; 
+  border: none; 
+  color: var(--accent-cyan); 
+  font-family: 'Consolas', monospace; 
+  font-size: 0.8rem; 
+  resize: none; 
+  outline: none; 
+  line-height: 1.5; 
+}
+
+.diag-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+  gap: 16px; 
+  margin-top: 10px; 
+}
+
+.diag-card { 
+  background: var(--card-bg); 
+  border: 1px solid var(--card-border); 
+  border-radius: 12px; 
+  padding: 16px; 
+  backdrop-filter: blur(10px); 
+}
+
+.diag-title { 
+  font-size: 0.8rem; 
+  font-weight: 700; 
+  color: var(--text-secondary); 
+  text-transform: uppercase; 
+  letter-spacing: 0.05em; 
+  margin-bottom: 12px; 
+  display: flex; 
+  justify-content: space-between; 
+}
+
+.ping-row { 
+  display: flex; 
+  justify-content: space-between; 
+  font-size: 0.85rem; 
+  padding: 6px 0; 
+  border-bottom: 1px solid rgba(255,255,255,0.03); 
+}
+
+.ping-row span:last-child { 
+  font-weight: 700; 
+  color: var(--accent-cyan); 
+}
+
+.fixes-panel { 
+  display: none; 
+  opacity: 0; 
+  transform: translateY(50px); 
+  transition: all 0.8s ease; 
+  margin-top: 20px; 
+}
+
+.fixes-panel.show { 
+  display: block; 
+  opacity: 1; 
+  transform: translateY(0); 
+}
+
+.fix-card { 
+  background: var(--card-bg); 
+  border: 1px solid var(--card-border); 
+  border-radius: 12px; 
+  padding: 16px 20px; 
+  margin-bottom: 12px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  opacity: 0; 
+  transform: translateY(20px); 
+  transition: all 0.5s ease; 
+  backdrop-filter: blur(10px); 
+}
+
+.fix-card.visible { 
+  opacity: 1; 
+  transform: translateY(0); 
+}
+
+.fix-info { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 4px; 
+}
+
+.fix-title { 
+  font-size: 0.95rem; 
+  font-weight: 700; 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+}
+
+.fix-desc { 
+  font-size: 0.8rem; 
+  color: var(--text-secondary); 
+}
+
+.badge { 
+  padding: 3px 8px; 
+  border-radius: 4px; 
+  font-size: 0.65rem; 
+  font-weight: 800; 
+  text-transform: uppercase; 
+}
+
+.badge-major { 
+  background: rgba(239, 68, 68, 0.2); 
+  color: var(--accent-red); 
+  border: 1px solid var(--accent-red); 
+}
+
+.badge-minor { 
+  background: rgba(245, 158, 11, 0.2); 
+  color: var(--accent-amber); 
+  border: 1px solid var(--accent-amber); 
+}
+
+.badge-minimal { 
+  background: rgba(16, 185, 129, 0.2); 
+  color: var(--accent-green); 
+  border: 1px solid var(--accent-green); 
+}
+
+.badge-kernel { 
+  background: rgba(0, 242, 254, 0.2); 
+  color: var(--accent-cyan); 
+  border: 1px solid var(--accent-cyan); 
+}
+
+.switch { 
+  position: relative; 
+  display: inline-block; 
+  width: 44px; 
+  height: 24px; 
+}
+
+.switch input { 
+  opacity: 0; 
+  width: 0; 
+  height: 0; 
+}
+
+.slider { 
+  position: absolute; 
+  cursor: pointer; 
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0; 
+  background-color: rgba(255,255,255,0.1); 
+  transition: .3s; 
+  border-radius: 24px; 
+  border: 1px solid var(--card-border); 
+}
+
+.slider:before { 
+  position: absolute; 
+  content: ""; 
+  height: 16px; 
+  width: 16px; 
+  left: 3px; 
+  bottom: 3px; 
+  background-color: white; 
+  transition: .3s; 
+  border-radius: 50%; 
+}
+
+input:checked + .slider { 
+  background-color: var(--accent-cyan); 
+}
+
+input:checked + .slider:before { 
+  transform: translateX(20px); 
+  background-color: #000; 
+}
+
+.script-drawer { 
+  background: var(--console-bg); 
+  border: 1px solid var(--card-border); 
+  border-radius: 12px; 
+  padding: 20px; 
+  margin-top: 24px; 
+}
+
+.script-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 12px; 
+}
+
+.script-header h3 { 
+  font-size: 0.9rem; 
+  font-weight: 700; 
+  color: #fff; 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+}
+
+.tab-container { 
+  display: flex; 
+  gap: 8px; 
+  margin-bottom: 12px; 
+}
+
+.tab-btn { 
+  background: rgba(255,255,255,0.05); 
+  color: var(--text-secondary); 
+  border: 1px solid var(--card-border); 
+  padding: 6px 16px; 
+  border-radius: 6px; 
+  font-size: 0.8rem; 
+  cursor: pointer; 
+  font-weight: 600; 
+}
+
+.tab-btn.active { 
+  background: var(--accent-cyan); 
+  color: #000; 
+  border-color: var(--accent-cyan); 
+}
+
+textarea.script-code { 
+  width: 100%; 
+  height: 200px; 
+  background: rgba(0,0,0,0.5); 
+  border: 1px solid var(--card-border); 
+  color: #38BDF8; 
+  font-family: 'Consolas', monospace; 
+  font-size: 0.8rem; 
+  padding: 12px; 
+  border-radius: 8px; 
+  resize: vertical; 
+  outline: none; 
+  margin-bottom: 12px; 
+  line-height: 1.4; 
+}
+
+.btn { 
+  background: var(--accent-cyan); 
+  color: #000; 
+  border: none; 
+  padding: 10px 20px; 
+  font-weight: 800; 
+  font-size: 0.85rem; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  transition: all 0.2s ease; 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 8px; 
+}
+
+.btn:hover { 
+  background: var(--accent-blue); 
+  color: #fff; 
+  box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); 
+}
+
+.btn-secondary { 
+  background: var(--card-border); 
+  color: #fff; 
+}
+
+.btn-secondary:hover { 
+  background: #334155; 
+}
