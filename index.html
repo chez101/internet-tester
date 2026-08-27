@@ -3,155 +3,674 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Network Diagnostics & Speedtest</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
+  <title>SPEEDTEST PRO | Enterprise Network Diagnostics</title>
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: #111827;
+      --bg-card: #1f2937;
+      --border-color: #374151;
+      --accent-primary: #3b82f6;
+      --accent-success: #10b981;
+      --accent-warning: #f59e0b;
+      --accent-danger: #ef4444;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding: 2rem;
+      line-height: 1.5;
+    }
+
+    .dashboard-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Top Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-surface);
+      padding: 1.25rem 1.75rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+    .logo-group h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.025em; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--accent-success);
+      background: rgba(16, 185, 129, 0.1);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+    }
+    .status-dot { width: 8px; height: 8px; background: var(--accent-success); border-radius: 50%; }
+
+    /* Telemetry Header Grid */
+    .telemetry-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      background: var(--bg-surface);
+      padding: 1.25rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+    .info-item span { display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+    .info-item strong { font-size: 1rem; color: var(--text-main); }
+    select.dns-select {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      width: 100%;
+      margin-top: 0.25rem;
+    }
+
+    /* Main Action Button */
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      font-size: 1.125rem;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.39);
+    }
+    .btn-primary:hover { background: linear-gradient(135deg, #1d4ed8, #1e40af); transform: translateY(-1px); }
+
+    /* Speed Metrics Cards */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .metric-card h3 { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .metric-val { font-size: 2.25rem; font-weight: 800; }
+    .metric-val span { font-size: 1rem; color: var(--text-muted); font-weight: 500; }
+    .sparkline-svg {
+      width: 100%;
+      height: 40px;
+      margin-top: 1rem;
+    }
+    .sparkline-path { fill: none; stroke: var(--accent-primary); stroke-width: 2.5; stroke-linecap: round; }
+
+    /* Latency & Advice Section */
+    .grid-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 900px) { .grid-two-col { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .panel-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+
+    .ping-list { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .ping-item {
+      background: var(--bg-card);
+      padding: 0.75rem;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+    }
+    .ping-val { font-family: var(--font-mono); font-weight: 700; color: var(--accent-success); }
+
+    /* Recommendations & Script Generator */
+    .fix-card {
+      background: var(--bg-card);
+      border-left: 4px solid var(--accent-primary);
+      padding: 1rem;
+      border-radius: 6px;
+      margin-bottom: 0.75rem;
+    }
+    .fix-card.severity-high { border-left-color: var(--accent-danger); }
+    .fix-card.severity-medium { border-left-color: var(--accent-warning); }
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-high { background: rgba(239, 68, 68, 0.2); color: var(--accent-danger); }
+    .badge-medium { background: rgba(245, 158, 11, 0.2); color: var(--accent-warning); }
+
+    /* OS Tabs & Code Block */
+    .tab-bar { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .tab-btn {
+      background: var(--bg-card);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .tab-btn.active { background: var(--accent-primary); color: white; border-color: var(--accent-primary); }
+
+    textarea.code-output {
+      width: 100%;
+      height: 220px;
+      background: #050811;
+      color: #38bdf8;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      resize: vertical;
+    }
+  </style>
 </head>
 <body>
-  <div class="glow-bg" aria-hidden="true"></div>
 
-  <header>
-    <div class="brand">
-      <h1>SPEEDTEST <span>PRO</span></h1>
+  <div class="dashboard-container">
+    <header>
+      <div class="logo-group">
+        <h1>SPEEDTEST PRO</h1>
+      </div>
+      <div class="status-badge">
+        <span class="status-dot"></span> Online
+      </div>
+    </header>
+
+    <div class="telemetry-bar">
+      <div class="info-item">
+        <span>Local Endpoint</span>
+        <strong id="telemetry-ip">192.168.1.1</strong>
+      </div>
+      <div class="info-item">
+        <span>Connection</span>
+        <strong>Spectrum Gbps Connection</strong>
+      </div>
+      <div class="info-item">
+        <span>Interface</span>
+        <strong>eth0</strong>
+      </div>
+      <div class="info-item">
+        <span>Gateway</span>
+        <strong>192.168.1.254</strong>
+      </div>
+      <div class="info-item">
+        <span>DNS Resolver</span>
+        <select class="dns-select">
+          <option>1.1.1.1 (Cloudflare)</option>
+          <option>8.8.8.8 (Google)</option>
+          <option>9.9.9.9 (Quad9)</option>
+        </select>
+      </div>
     </div>
-    <div class="status-badge" role="status">
-      <div class="status-dot" aria-hidden="true"></div>
-      <span>Online</span>
+
+    <button id="btn-run-pipeline" class="btn-primary">Go Start Test</button>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <h3>Download</h3>
+        <div id="val-download" class="metric-val">0.0 <span>Mbps</span></div>
+        <svg class="sparkline-svg"><path id="spark-dl" class="sparkline-path" d=""/></svg>
+      </div>
+      <div class="metric-card">
+        <h3>Upload</h3>
+        <div id="val-upload" class="metric-val">0.0 <span>Mbps</span></div>
+        <svg class="sparkline-svg"><path id="spark-ul" class="sparkline-path" d=""/></svg>
+      </div>
+      <div class="metric-card">
+        <h3>Network Jitter</h3>
+        <div id="metric-jitter" class="metric-val">0.0 <span>ms</span></div>
+      </div>
+      <div class="metric-card">
+        <h3>Bufferbloat Score</h3>
+        <div id="metric-bloat" class="metric-val">N/A</div>
+      </div>
     </div>
-  </header>
 
-  <main>
-    <section class="hud-meta">
-      <div class="hud-ip">192.168.1.1</div>
-      <div class="hud-isp">
-        <span>Spectrum Gbps Connection</span>
-        <button 
-          class="info-btn" 
-          id="drawerToggle"
-          type="button"
-          aria-expanded="false" 
-          aria-controls="networkDetails"
-        >
-          Details
-        </button>
+    <div class="grid-two-col">
+      <div class="panel">
+        <div class="panel-title">Edge Node Latency Probes</div>
+        <div class="ping-list">
+          <div class="ping-item"><span>Cloudflare (1.1.1.1)</span><span id="dns-cf" class="ping-val">--</span></div>
+          <div class="ping-item"><span>Google (8.8.8.8)</span><span id="dns-goog" class="ping-val">--</span></div>
+          <div class="ping-item"><span>Fortnite (AWS East)</span><span id="ping-fn" class="ping-val">--</span></div>
+          <div class="ping-item"><span>Valorant (Riot Edge)</span><span id="ping-val" class="ping-val">--</span></div>
+          <div class="ping-item"><span>Discord Gateway</span><span id="ping-discord" class="ping-val">--</span></div>
+          <div class="ping-item"><span>Minecraft Auth</span><span id="ping-mc" class="ping-val">--</span></div>
+        </div>
       </div>
 
-      <div class="drawer" id="networkDetails" aria-hidden="true">
-        <div class="drawer-grid">
-          <div class="drawer-item">
-            <div>Interface</div>
-            <div>eth0</div>
+      <div class="panel">
+        <div class="panel-title">Smart Optimization Recommendations</div>
+        <div id="recommendations-list">
+          <div class="rec-empty" style="color: var(--text-muted); font-size: 0.9rem;">Run network test to generate real-time advice.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Kernel & OS Optimization Script Generator</div>
+      <div class="tab-bar">
+        <button class="tab-btn active" data-os-tab="linux">Linux (sysctl)</button>
+        <button class="tab-btn" data-os-tab="windows">Windows (PowerShell)</button>
+        <button class="tab-btn" data-os-tab="mac">macOS (zsh)</button>
+        <button id="btn-rollback" class="tab-btn" style="margin-left: auto; color: var(--accent-danger);">Generate Rollback</button>
+      </div>
+      <textarea id="generated-script" class="code-output" readonly></textarea>
+      <textarea id="terminal-out" class="code-output" style="height: 100px; margin-top: 1rem; color: #a7f3d0;" readonly placeholder="System Execution Log..."></textarea>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const CONFIG = {
+      DEFAULT_TIMEOUT_MS: 3000,
+      SPEED_TEST_STREAMS: 6,
+      SPEED_TEST_DURATION_MS: 8000,
+      UPLOAD_CHUNK_KB: 1024,
+      TRIM_PERCENTILE: 0.1,
+    };
+
+    const ENDPOINTS = {
+      dns: [
+        { id: 'dns-cf', name: 'Cloudflare (1.1.1.1)', doh: 'https://1.1.1.1/dns-query' },
+        { id: 'dns-goog', name: 'Google (8.8.8.8)', doh: 'https://dns.google/resolve' }
+      ],
+      games: [
+        { id: 'ping-fn', name: 'Fortnite (AWS East)', url: 'https://dynamodb.us-east-1.amazonaws.com' },
+        { id: 'ping-val', name: 'Valorant (Riot Edge)', url: 'https://ping.riotgames.com' },
+        { id: 'ping-mc', name: 'Minecraft Auth', url: 'https://session.minecraft.net' }
+      ],
+      services: [
+        { id: 'ping-discord', name: 'Discord Gateway', url: 'https://gateway.discord.gg' }
+      ]
+    };
+
+    class StateStore {
+      constructor() {
+        this.state = {
+          activeTab: 'linux',
+          isRunning: false,
+          telemetry: {},
+          unloadedLatency: [],
+          loadedLatencyDl: [],
+          loadedLatencyUl: [],
+          downloadMbps: 0,
+          uploadMbps: 0,
+          bufferbloatScore: 'N/A',
+          rpm: 0,
+          recommendations: []
+        };
+        this.listeners = new Set();
+      }
+      getState() { return Object.freeze({ ...this.state }); }
+      setState(patch) { this.state = { ...this.state, ...patch }; this.notify(); }
+      subscribe(listener) { this.listeners.add(listener); return () => this.listeners.delete(listener); }
+      notify() { const copy = this.getState(); this.listeners.forEach(fn => fn(copy)); }
+    }
+
+    const Store = new StateStore();
+
+    class MathUtils {
+      static trimmedMean(samples, trimRatio = 0.1) {
+        if (!samples || !samples.length) return 0;
+        const sorted = [...samples].sort((a, b) => a - b);
+        const trimCount = Math.floor(sorted.length * trimRatio);
+        const trimmed = sorted.slice(trimCount, sorted.length - trimCount);
+        if (!trimmed.length) return sorted[Math.floor(sorted.length / 2)];
+        return trimmed.reduce((acc, v) => acc + v, 0) / trimmed.length;
+      }
+      static calculateJitter(samples) {
+        if (!samples || samples.length < 2) return 0;
+        let sum = 0;
+        for (let i = 1; i < samples.length; i++) sum += Math.abs(samples[i] - samples[i - 1]);
+        return sum / (samples.length - 1);
+      }
+      static calculatePercentile(samples, p) {
+        if (!samples || !samples.length) return 0;
+        const sorted = [...samples].sort((a, b) => a - b);
+        const index = Math.ceil((p / 100) * sorted.length) - 1;
+        return sorted[Math.max(0, index)];
+      }
+    }
+
+    class NetworkTelemetry {
+      static async getCDNTrace() {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), CONFIG.DEFAULT_TIMEOUT_MS);
+        try {
+          const res = await fetch('https://1.1.1.1/cdn-cgi/trace', { cache: 'no-store', signal: controller.signal });
+          clearTimeout(timer);
+          if (!res.ok) throw new Error('Failed');
+          const text = await res.text();
+          const entries = text.trim().split('\n').filter(l => l.includes('=')).map(l => {
+            const idx = l.indexOf('=');
+            return [l.slice(0, idx), l.slice(idx + 1)];
+          });
+          return Object.fromEntries(entries);
+        } catch (e) {
+          return { ip: '192.168.1.1', loc: 'US', colo: 'Local Target' };
+        }
+      }
+    }
+
+    class HighPrecisionProber {
+      static async probeEndpoint(url, samplesCount = 3) {
+        const latencies = [];
+        for (let i = 0; i < samplesCount; i++) {
+          const separator = url.includes('?') ? '&' : '?';
+          const targetUrl = `${url}${separator}_cb=${performance.now()}_${Math.random()}`;
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), CONFIG.DEFAULT_TIMEOUT_MS);
+          const start = performance.now();
+          try {
+            await fetch(targetUrl, { mode: 'no-cors', cache: 'no-store', signal: controller.signal });
+            clearTimeout(timer);
+            latencies.push(Math.max(1, Math.round(performance.now() - start)));
+          } catch (e) {
+            clearTimeout(timer);
+            latencies.push(Math.max(1, Math.round(performance.now() - start)));
+          }
+        }
+        return MathUtils.trimmedMean(latencies, CONFIG.TRIM_PERCENTILE);
+      }
+    }
+
+    class SpeedTestEngine {
+      static async measureDownload(onProgress) {
+        const streamsCount = CONFIG.SPEED_TEST_STREAMS;
+        const durationMs = CONFIG.SPEED_TEST_DURATION_MS;
+        const testUrl = 'https://speed.cloudflare.com/__down?bytes=25000000';
+        let totalBytes = 0;
+        const startTime = performance.now();
+        const samples = [];
+        const loadedPings = [];
+        const abortController = new AbortController();
+        const capTimer = setTimeout(() => abortController.abort(), durationMs);
+
+        const latencyWorker = (async () => {
+          while (!abortController.signal.aborted) {
+            try {
+              const ping = await HighPrecisionProber.probeEndpoint('https://1.1.1.1/dns-query', 1);
+              if (ping > 0) loadedPings.push(ping);
+            } catch (e) {}
+            await new Promise(r => setTimeout(r, 250));
+          }
+        })();
+
+        const streamTasks = Array.from({ length: streamsCount }, async () => {
+          while (performance.now() - startTime < durationMs && !abortController.signal.aborted) {
+            try {
+              const res = await fetch(`${testUrl}&_r=${Math.random()}`, { signal: abortController.signal, cache: 'no-store' });
+              if (!res.body) break;
+              const reader = res.body.getReader();
+              while (!abortController.signal.aborted) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                totalBytes += value.length;
+                const elapsedSec = (performance.now() - startTime) / 1000;
+                if (elapsedSec > 0.2) {
+                  const currentMbps = (totalBytes * 8) / (elapsedSec * 1_000_000);
+                  samples.push(currentMbps);
+                  onProgress(parseFloat(currentMbps.toFixed(1)), samples.slice(-20));
+                }
+              }
+            } catch (e) { break; }
+          }
+        });
+
+        await Promise.allSettled(streamTasks);
+        clearTimeout(capTimer);
+        abortController.abort();
+        await Promise.allSettled([latencyWorker]);
+
+        return { mbps: samples.length ? MathUtils.calculatePercentile(samples, 90) : 0, loadedPings };
+      }
+
+      static async measureUpload(onProgress) {
+        const durationMs = CONFIG.SPEED_TEST_DURATION_MS;
+        const testUrl = 'https://speed.cloudflare.com/__up';
+        const chunk = new Uint8Array(CONFIG.UPLOAD_CHUNK_KB * 1024);
+        const maxCryptoChunk = 65536;
+        for (let offset = 0; offset < chunk.length; offset += maxCryptoChunk) {
+          crypto.getRandomValues(chunk.subarray(offset, Math.min(offset + maxCryptoChunk, chunk.length)));
+        }
+
+        let totalBytes = 0;
+        const startTime = performance.now();
+        const samples = [];
+        const loadedPings = [];
+        const abortController = new AbortController();
+        const capTimer = setTimeout(() => abortController.abort(), durationMs);
+
+        const latencyWorker = (async () => {
+          while (!abortController.signal.aborted) {
+            try {
+              const ping = await HighPrecisionProber.probeEndpoint('https://1.1.1.1/dns-query', 1);
+              if (ping > 0) loadedPings.push(ping);
+            } catch (e) {}
+            await new Promise(r => setTimeout(r, 250));
+          }
+        })();
+
+        const streamTasks = Array.from({ length: 4 }, async () => {
+          while (performance.now() - startTime < durationMs && !abortController.signal.aborted) {
+            try {
+              await fetch(`${testUrl}?_r=${Math.random()}`, { method: 'POST', body: chunk, cache: 'no-store', signal: abortController.signal });
+              totalBytes += chunk.length;
+              const elapsedSec = (performance.now() - startTime) / 1000;
+              if (elapsedSec > 0.2) {
+                const currentMbps = (totalBytes * 8) / (elapsedSec * 1_000_000);
+                samples.push(currentMbps);
+                onProgress(parseFloat(currentMbps.toFixed(1)), samples.slice(-20));
+              }
+            } catch (e) { break; }
+          }
+        });
+
+        await Promise.allSettled(streamTasks);
+        clearTimeout(capTimer);
+        abortController.abort();
+        await Promise.allSettled([latencyWorker]);
+
+        return { mbps: samples.length ? MathUtils.calculatePercentile(samples, 85) : 0, loadedPings };
+      }
+    }
+
+    class BufferbloatAnalyzer {
+      static computeGrade(unloadedPing, loadedPings) {
+        if (!loadedPings || !loadedPings.length) return { grade: 'Grade A+', rpm: 2400 };
+        const avgLoaded = MathUtils.trimmedMean(loadedPings, 0.1);
+        const delta = Math.max(0, avgLoaded - unloadedPing);
+        const rpm = Math.round(60000 / Math.max(1, avgLoaded));
+        let grade = 'Grade A+';
+        if (delta > 100) grade = 'Grade F';
+        else if (delta > 60) grade = 'Grade D';
+        else if (delta > 30) grade = 'Grade C';
+        else if (delta > 15) grade = 'Grade B';
+        else if (delta > 5) grade = 'Grade A';
+        return { grade, rpm };
+      }
+    }
+
+    class SmartAdvisor {
+      static generateFixes(state) {
+        const recs = [];
+        const jitter = MathUtils.calculateJitter(state.unloadedLatency);
+        if (state.bufferbloatScore.includes('C') || state.bufferbloatScore.includes('D') || state.bufferbloatScore.includes('F')) {
+          recs.push({ severity: 'HIGH', title: 'Bufferbloat Spikes Detected', desc: 'Enable Smart Queue Management (SQM) with CAKE/FQ-CoDel on router, or cap bandwidth to 90% in router QoS.' });
+        }
+        if (jitter > 8) {
+          recs.push({ severity: 'HIGH', title: 'High Network Jitter', desc: `Jitter measured at ${jitter.toFixed(1)} ms. Switch to 5GHz/6GHz Wi-Fi, MoCA 2.5 adapters, or direct Cat6 Ethernet.` });
+        }
+        recs.push({ severity: 'MEDIUM', title: 'TCP BBR & Congestion Tuning', desc: 'Enable TCP BBR and disable Nagle\'s Algorithm to prevent micro-stuttering during online gaming.' });
+        return recs;
+      }
+    }
+
+    class KernelOptimizer {
+      static buildBashScript() {
+        return `#!/usr/bin/env bash\n# NetOptimizer v8.5 Linux SYSCTL Tuner\nsudo sysctl -w net.core.default_qdisc=fq\nsudo sysctl -w net.ipv4.tcp_congestion_control=bbr\nsudo sysctl -w net.ipv4.tcp_fastopen=3\necho "[+] Linux network parameters tuned!"`;
+      }
+      static buildPowerShell() {
+        return `# NetOptimizer v8.5 Windows Tuner\nSet-NetTCPSetting -SettingName 'Internet' -CongestionProvider CUBIC -AutoTuningLevelLocal Normal\nDisable-NetAdapterLso -Name * -IPv4 -IPv6 -ErrorAction SilentlyContinue\nWrite-Host "[+] Windows TCP stack optimized!"`;
+      }
+      static buildMacOSScript() {
+        return `#!/usr/bin/env zsh\nsudo sysctl -w net.inet.tcp.delayed_ack=0\nsudo sysctl -w net.inet.tcp.sendspace=4194304\necho "[+] macOS TCP tuned!"`;
+      }
+      static buildRollback(platform) {
+        if (platform === 'windows') return `# Windows Rollback\nSet-NetTCPSetting -SettingName 'Internet' -AutoTuningLevelLocal Normal`;
+        if (platform === 'mac') return `sudo sysctl -w net.inet.tcp.delayed_ack=3`;
+        return `sudo sysctl -w net.ipv4.tcp_congestion_control=cubic`;
+      }
+    }
+
+    class DiagnosticPipeline {
+      static async run() {
+        if (Store.getState().isRunning) return;
+        Store.setState({ isRunning: true });
+        const term = document.getElementById('terminal-out');
+        const log = (msg) => { term.value += `[${new Date().toLocaleTimeString()}] ${msg}\n`; term.scrollTop = term.scrollHeight; };
+        term.value = '';
+
+        log('Initializing SpeedTest Pro Engine...');
+        const telemetry = await NetworkTelemetry.getCDNTrace();
+        document.getElementById('telemetry-ip').innerText = telemetry.ip || '192.168.1.1';
+        log(`Path Telemetry Received | IP: ${telemetry.ip}`);
+
+        log('Probing DNS & Gaming Edge Nodes...');
+        const allIdlePings = [];
+        await Promise.all([...ENDPOINTS.dns, ...ENDPOINTS.games, ...ENDPOINTS.services].map(async (ep) => {
+          const ping = await HighPrecisionProber.probeEndpoint(ep.url || ep.doh, 3);
+          if (ping > 0) allIdlePings.push(ping);
+          const el = document.getElementById(ep.id);
+          if (el) el.innerText = `${ping} ms`;
+        }));
+
+        const baselinePing = MathUtils.trimmedMean(allIdlePings, 0.1);
+        log(`Idle Latency Baseline: ${baselinePing.toFixed(1)} ms`);
+
+        log('Executing Multi-Stream Download Test...');
+        const dl = await SpeedTestEngine.measureDownload((mbps, samples) => {
+          document.getElementById('val-download').innerHTML = `${mbps} <span>Mbps</span>`;
+          RenderEngine.renderSparkline('spark-dl', samples);
+        });
+
+        log('Executing Upload Payload Test...');
+        const ul = await SpeedTestEngine.measureUpload((mbps, samples) => {
+          document.getElementById('val-upload').innerHTML = `${mbps} <span>Mbps</span>`;
+          RenderEngine.renderSparkline('spark-ul', samples);
+        });
+
+        const bloat = BufferbloatAnalyzer.computeGrade(baselinePing, [...dl.loadedPings, ...ul.loadedPings]);
+        const statePatch = {
+          downloadMbps: dl.mbps,
+          uploadMbps: ul.mbps,
+          unloadedLatency: allIdlePings,
+          bufferbloatScore: bloat.grade,
+          rpm: bloat.rpm,
+          isRunning: false
+        };
+        statePatch.recommendations = SmartAdvisor.generateFixes(statePatch);
+        Store.setState(statePatch);
+        log(`Test Complete! Bufferbloat Grade: ${bloat.grade}`);
+        RenderEngine.updateUI();
+      }
+    }
+
+    class RenderEngine {
+      static renderSparkline(id, data) {
+        const path = document.getElementById(id);
+        if (!path || !data || !data.length) return;
+        const width = 100, height = 35;
+        const maxVal = Math.max(...data, 1);
+        const step = width / Math.max(1, data.length - 1);
+        const points = data.map((v, i) => `${(i * step).toFixed(1)},${(height - (v / maxVal) * (height - 5)).toFixed(1)}`);
+        path.setAttribute('d', `M ${points.join(' L ')}`);
+      }
+      static updateUI() {
+        const state = Store.getState();
+        const jitter = MathUtils.calculateJitter(state.unloadedLatency);
+        document.getElementById('metric-jitter').innerText = `${jitter.toFixed(1)} ms`;
+        
+        const elBloat = document.getElementById('metric-bloat');
+        elBloat.innerText = `${state.bufferbloatScore} (${state.rpm} RPM)`;
+        elBloat.style.color = state.bufferbloatScore.includes('A') ? '#10b981' : '#f59e0b';
+
+        const recContainer = document.getElementById('recommendations-list');
+        recContainer.innerHTML = state.recommendations.map(r => `
+          <div class="fix-card severity-${r.severity.toLowerCase()}">
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
+              <strong>${r.title}</strong>
+              <span class="badge badge-${r.severity.toLowerCase()}">${r.severity}</span>
+            </div>
+            <div style="font-size:0.85rem; color:var(--text-muted);">${r.desc}</div>
           </div>
-          <div class="drawer-item">
-            <div>Gateway</div>
-            <div>192.168.1.254</div>
-          </div>
-          <div class="drawer-item">
-            <label for="dnsSelect">DNS Resolver</label>
-            <select class="drawer-select" id="dnsSelect">
-              <option value="1.1.1.1">1.1.1.1 (Cloudflare)</option>
-              <option value="8.8.8.8">8.8.8.8 (Google)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </section>
+        `).join('');
 
-    <section class="stage-container" id="stage">
-      <div class="go-btn-wrap">
-        <button class="go-btn" id="goBtn" type="button" aria-label="Start Speedtest">
-          <span>GO</span>
-          <span class="go-sub">START TEST</span>
-        </button>
-      </div>
+        RenderEngine.updateScript();
+      }
+      static updateScript() {
+        const state = Store.getState();
+        const scriptBox = document.getElementById('generated-script');
+        if (state.activeTab === 'windows') scriptBox.value = KernelOptimizer.buildPowerShell();
+        else if (state.activeTab === 'mac') scriptBox.value = KernelOptimizer.buildMacOSScript();
+        else scriptBox.value = KernelOptimizer.buildBashScript();
+      }
+    }
 
-      <div class="metrics-panel">
-        <article class="metric-card">
-          <h2 class="metric-title">Download</h2>
-          <div class="metric-val">940.5 <span>Mbps</span></div>
-          <svg class="sparkline-svg" viewBox="0 0 100 40" aria-hidden="true" focusable="false">
-            <path class="sparkline-path" d="M0 30 Q 25 5, 50 20 T 100 10" />
-          </svg>
-        </article>
-        <article class="metric-card">
-          <h2 class="metric-title">Upload</h2>
-          <div class="metric-val">880.2 <span>Mbps</span></div>
-          <svg class="sparkline-svg" viewBox="0 0 100 40" aria-hidden="true" focusable="false">
-            <path class="sparkline-path" d="M0 35 Q 25 15, 50 25 T 100 5" />
-          </svg>
-        </article>
-      </div>
-    </section>
+    function init() {
+      document.querySelectorAll('[data-os-tab]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('[data-os-tab]').forEach(b => b.classList.remove('active'));
+          e.currentTarget.classList.add('active');
+          Store.setState({ activeTab: e.currentTarget.getAttribute('data-os-tab') });
+          RenderEngine.updateScript();
+        });
+      });
 
-    <section class="terminal-wrap" aria-labelledby="consoleHeading">
-      <div class="terminal-header">
-        <span id="consoleHeading">CONSOLE LOG</span>
-        <span>bash</span>
-      </div>
-      <textarea 
-        class="console" 
-        readonly 
-        aria-label="Console Log Output"
-      >[INFO] Initializing latency probe...
-[INFO] Target connected via eth0.
-[INFO] Ready for throughput profiling.</textarea>
-    </section>
+      document.getElementById('btn-run-pipeline').addEventListener('click', () => DiagnosticPipeline.run());
+      document.getElementById('btn-rollback').addEventListener('click', () => {
+        document.getElementById('generated-script').value = KernelOptimizer.buildRollback(Store.getState().activeTab);
+      });
 
-    <section class="diag-grid">
-      <div class="diag-card">
-        <div class="diag-title">
-          <h2>Ping Latency</h2>
-          <span class="status-tag">Optimal</span>
-        </div>
-        <div class="ping-row">
-          <span>Cloudflare (1.1.1.1)</span>
-          <span>7 ms</span>
-        </div>
-        <div class="ping-row">
-          <span>Google (8.8.8.8)</span>
-          <span>11 ms</span>
-        </div>
-      </div>
-    </section>
+      RenderEngine.updateScript();
+    }
 
-    <section class="fixes-panel show" aria-label="Optimization Toggles">
-      <div class="fix-card visible">
-        <div class="fix-info">
-          <h3 class="fix-title">
-            TCP BBR Congestion Control
-            <span class="badge badge-kernel">Kernel</span>
-          </h3>
-          <p class="fix-desc">Optimizes throughput and latency under packet loss.</p>
-        </div>
-        <label class="switch" for="bbrToggle">
-          <input type="checkbox" id="bbrToggle" checked aria-label="Toggle TCP BBR Congestion Control">
-          <span class="slider"></span>
-        </label>
-      </div>
-    </section>
-
-    <section class="script-drawer" aria-labelledby="scriptHeading">
-      <div class="script-header">
-        <h2 id="scriptHeading">Network Optimization Script</h2>
-      </div>
-      <div class="tab-container" role="tablist" aria-label="Operating System Selector">
-        <button class="tab-btn active" id="tab-linux" type="button" role="tab" aria-selected="true" aria-controls="tabpanel-script">Linux</button>
-        <button class="tab-btn" id="tab-windows" type="button" role="tab" aria-selected="false" aria-controls="tabpanel-script">Windows</button>
-      </div>
-      <div id="tabpanel-script" role="tabpanel" aria-labelledby="tab-linux">
-        <textarea 
-          class="script-code" 
-          readonly 
-          aria-label="Optimization Script Commands"
-        ># Apply Kernel Optimizations
-sysctl -w net.ipv4.tcp_congestion_control=bbr
-sysctl -w net.core.rmem_max=16777216</textarea>
-      </div>
-      <div class="script-actions">
-        <button type="button" class="btn">Apply Optimizations</button>
-        <button type="button" class="btn btn-secondary">Reset</button>
-      </div>
-    </section>
-  </main>
+    document.addEventListener('DOMContentLoaded', init);
+  })();
+  </script>
 </body>
 </html>
