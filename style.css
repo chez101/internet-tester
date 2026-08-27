@@ -1,0 +1,192 @@
+/* Custom CSS Variables & Modern Theme */
+:root {
+  color-scheme: light dark;
+  
+  /* OKLCH colors paired with light-dark() eliminate dark mode media duplicates */
+  --primary: light-dark(oklch(0.55 0.22 260), oklch(0.68 0.19 250));
+  --primary-hover: light-dark(oklch(0.48 0.22 260), oklch(0.75 0.18 250));
+  --bg-color: light-dark(oklch(0.98 0.005 240), oklch(0.14 0.02 250));
+  --card-bg: light-dark(rgba(255, 255, 255, 0.75), rgba(30, 41, 59, 0.65));
+  --text-main: light-dark(oklch(0.18 0.02 250), oklch(0.96 0.01 240));
+  --text-muted: light-dark(oklch(0.48 0.02 250), oklch(0.68 0.02 250));
+  --border-color: light-dark(rgba(226, 232, 240, 0.8), rgba(51, 65, 85, 0.6));
+  
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.25);
+  
+  --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Reset & Base Standards */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Fluid Typography */
+h1, h2, h3, h4 {
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.025em;
+}
+
+h1 { font-size: clamp(2rem, 5vw, 3.25rem); }
+h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); }
+h3 { font-size: clamp(1.25rem, 2.5vw, 1.65rem); }
+
+p {
+  color: var(--text-muted);
+  margin-block-end: 1rem;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+a:hover {
+  opacity: 0.85;
+}
+
+/* Layout & Logical Properties */
+.container {
+  inline-size: min(100% - 2rem, 1200px);
+  margin-inline: auto;
+}
+
+/* Frosted Glass Header */
+header {
+  background-color: var(--card-bg);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-block-end: 1px solid var(--border-color);
+  padding-block: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.75rem;
+  list-style: none;
+}
+
+main {
+  flex: 1;
+  padding-block: clamp(2rem, 5vw, 4rem);
+}
+
+footer {
+  background-color: var(--card-bg);
+  border-block-start: 1px solid var(--border-color);
+  padding-block: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* Safe Grid & Card Micro-Interactions */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 1.5rem;
+  margin-block-start: 2rem;
+}
+
+.card {
+  background-color: var(--card-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  will-change: transform, box-shadow;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: light-dark(rgba(37, 99, 235, 0.3), rgba(147, 197, 253, 0.3));
+}
+
+/* Interactive Controls & Accessibility Focus */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  background-color: var(--primary);
+  color: #ffffff;
+  transition: var(--transition);
+}
+
+.btn:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+input, textarea, select {
+  inline-size: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--card-bg);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.95rem;
+  margin-block-end: 1rem;
+  transition: var(--transition);
+}
+
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-color: transparent;
+}
+
+/* Responsive Layout */
+@media (max-width: 768px) {
+  nav {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
