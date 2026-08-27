@@ -1,607 +1,131 @@
-:root {
-  --bg-dark: #070A11;
-  --card-bg: rgba(15, 23, 42, 0.85);
-  --card-border: rgba(255, 255, 255, 0.1);
-  --accent-cyan: #00F2FE;
-  --accent-blue: #4FACFE;
-  --accent-green: #10B981;
-  --accent-amber: #F59E0B;
-  --accent-red: #EF4444;
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --console-bg: #020617;
-}
-
-* { 
-  box-sizing: border-box; 
-  margin: 0; 
-  padding: 0; 
-  font-family: 'Segoe UI', -apple-system, sans-serif; 
-}
-
-body { 
-  background-color: var(--bg-dark); 
-  color: var(--text-primary); 
-  min-height: 100vh; 
-  overflow-x: hidden; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-}
-
-.glow-bg { 
-  position: fixed; 
-  top: 0; 
-  left: 0; 
-  width: 100vw; 
-  height: 100vh; 
-  background: radial-gradient(circle at 50% 30%, rgba(0, 242, 254, 0.08), transparent 60%); 
-  pointer-events: none; 
-  z-index: 0; 
-}
-
-header { 
-  width: 100%; 
-  max-width: 1200px; 
-  padding: 20px 24px; 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  z-index: 10; 
-}
-
-.brand { 
-  font-size: 1.25rem; 
-  font-weight: 800; 
-  color: #fff; 
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
-  letter-spacing: 0.05em; 
-}
-
-.brand span { 
-  color: var(--accent-cyan); 
-  font-size: 0.8rem; 
-  border: 1px solid var(--accent-cyan); 
-  padding: 2px 8px; 
-  border-radius: 4px; 
-}
-
-.status-badge { 
-  background: rgba(16, 185, 129, 0.1); 
-  color: var(--accent-green); 
-  border: 1px solid var(--accent-green); 
-  padding: 4px 10px; 
-  border-radius: 20px; 
-  font-size: 0.75rem; 
-  font-weight: 700; 
-  display: flex; 
-  align-items: center; 
-  gap: 6px; 
-}
-
-.status-dot { 
-  width: 8px; 
-  height: 8px; 
-  background-color: var(--accent-green); 
-  border-radius: 50%; 
-  box-shadow: 0 0 8px var(--accent-green); 
-}
-
-main { 
-  width: 100%; 
-  max-width: 1200px; 
-  padding: 0 24px 40px; 
-  z-index: 10; 
-  flex: 1; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 24px; 
-}
-
-.hud-meta { 
-  text-align: center; 
-  margin-top: 10px; 
-  transition: all 0.5s ease; 
-}
-
-.hud-ip { 
-  font-size: 1.8rem; 
-  font-weight: 800; 
-  background: linear-gradient(90deg, #fff, var(--text-secondary)); 
-  -webkit-background-clip: text; 
-  -webkit-text-fill-color: transparent; 
-}
-
-.hud-isp { 
-  font-size: 0.9rem; 
-  color: var(--text-secondary); 
-  margin-top: 4px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  gap: 8px; 
-}
-
-.info-btn { 
-  cursor: pointer; 
-  color: var(--accent-cyan); 
-  font-size: 0.85rem; 
-  border: none; 
-  background: transparent; 
-  text-decoration: underline; 
-}
-
-.drawer { 
-  max-height: 0; 
-  overflow: hidden; 
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-  background: rgba(15, 23, 42, 0.95); 
-  border: 1px solid var(--card-border); 
-  border-radius: 12px; 
-  margin-top: 12px; 
-}
-
-.drawer.open { 
-  max-height: 350px; 
-  padding: 16px; 
-  margin-top: 12px; 
-}
-
-.drawer-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-  gap: 12px; 
-  font-size: 0.8rem; 
-  text-align: left; 
-}
-
-.drawer-item div:first-child { 
-  color: var(--text-secondary); 
-  font-size: 0.7rem; 
-  text-transform: uppercase; 
-  font-weight: 700; 
-}
-
-.drawer-item div:last-child { 
-  font-weight: 600; 
-  color: #fff; 
-  margin-top: 2px; 
-}
-
-.drawer-select { 
-  background: #020617; 
-  color: var(--accent-cyan); 
-  border: 1px solid var(--card-border); 
-  padding: 4px 8px; 
-  border-radius: 4px; 
-  font-size: 0.8rem; 
-  width: 100%; 
-  margin-top: 4px; 
-}
-
-.stage-container { 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  position: relative; 
-  min-height: 220px; 
-  margin-top: 20px; 
-  flex-wrap: wrap; 
-  gap: 20px; 
-}
-
-.go-btn-wrap { 
-  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); 
-  z-index: 5; 
-}
-
-.go-btn { 
-  width: 180px; 
-  height: 180px; 
-  border-radius: 50%; 
-  background: radial-gradient(circle, rgba(0,242,254,0.15) 0%, rgba(11,15,25,0.9) 100%); 
-  border: 2px solid var(--accent-cyan); 
-  color: var(--accent-cyan); 
-  font-size: 2rem; 
-  font-weight: 900; 
-  letter-spacing: 0.1em; 
-  cursor: pointer; 
-  box-shadow: 0 0 30px rgba(0, 242, 254, 0.25), inset 0 0 15px rgba(0, 242, 254, 0.15); 
-  transition: all 0.3s ease; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  flex-direction: column; 
-}
-
-.go-btn:hover { 
-  transform: scale(1.05); 
-  box-shadow: 0 0 50px rgba(0, 242, 254, 0.5), inset 0 0 25px rgba(0, 242, 254, 0.3); 
-}
-
-.go-sub { 
-  font-size: 0.65rem; 
-  font-weight: 600; 
-  color: var(--text-secondary); 
-  letter-spacing: 0.05em; 
-  margin-top: 4px; 
-}
-
-.stage-container.active .go-btn,
-.stage-container.complete .go-btn { 
-  width: 130px; 
-  height: 130px; 
-  font-size: 1.1rem; 
-}
-
-.stage-container.active .go-btn { 
-  pointer-events: none; 
-}
-
-.metrics-panel { 
-  opacity: 0; 
-  transform: translateY(20px); 
-  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); 
-  display: flex; 
-  gap: 20px; 
-  pointer-events: none; 
-}
-
-.stage-container.active .metrics-panel, 
-.stage-container.complete .metrics-panel { 
-  opacity: 1; 
-  transform: translateY(0); 
-  pointer-events: auto; 
-}
-
-.metric-card { 
-  background: var(--card-bg); 
-  border: 1px solid var(--card-border); 
-  border-radius: 16px; 
-  padding: 20px; 
-  width: 220px; 
-  backdrop-filter: blur(12px); 
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-}
-
-.metric-title { 
-  font-size: 0.75rem; 
-  font-weight: 700; 
-  color: var(--text-secondary); 
-  text-transform: uppercase; 
-  letter-spacing: 0.05em; 
-}
-
-.metric-val { 
-  font-size: 2.2rem; 
-  font-weight: 800; 
-  color: #fff; 
-  margin: 8px 0; 
-}
-
-.metric-val span { 
-  font-size: 0.9rem; 
-  color: var(--text-secondary); 
-  font-weight: 600; 
-}
-
-.sparkline-svg { 
-  width: 100%; 
-  height: 40px; 
-}
-
-.sparkline-path { 
-  stroke: var(--accent-cyan); 
-  fill: none; 
-  stroke-width: 2; 
-  transition: all 0.1s ease; 
-}
-
-.terminal-wrap { 
-  opacity: 0; 
-  transform: translateY(40px); 
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); 
-  background: var(--console-bg); 
-  border: 1px solid var(--card-border); 
-  border-radius: 12px; 
-  padding: 16px; 
-  width: 100%; 
-  box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
-}
-
-.stage-container.active ~ .terminal-wrap, 
-.stage-container.complete ~ .terminal-wrap { 
-  opacity: 1; 
-  transform: translateY(0); 
-}
-
-.terminal-header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  border-bottom: 1px solid var(--card-border); 
-  padding-bottom: 8px; 
-  margin-bottom: 10px; 
-  font-size: 0.75rem; 
-  color: var(--text-secondary); 
-  font-family: monospace; 
-}
-
-textarea.console { 
-  width: 100%; 
-  height: 110px; 
-  background: transparent; 
-  border: none; 
-  color: var(--accent-cyan); 
-  font-family: 'Consolas', monospace; 
-  font-size: 0.8rem; 
-  resize: none; 
-  outline: none; 
-  line-height: 1.5; 
-}
-
-.diag-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-  gap: 16px; 
-  margin-top: 10px; 
-}
-
-.diag-card { 
-  background: var(--card-bg); 
-  border: 1px solid var(--card-border); 
-  border-radius: 12px; 
-  padding: 16px; 
-  backdrop-filter: blur(10px); 
-}
-
-.diag-title { 
-  font-size: 0.8rem; 
-  font-weight: 700; 
-  color: var(--text-secondary); 
-  text-transform: uppercase; 
-  letter-spacing: 0.05em; 
-  margin-bottom: 12px; 
-  display: flex; 
-  justify-content: space-between; 
-}
-
-.ping-row { 
-  display: flex; 
-  justify-content: space-between; 
-  font-size: 0.85rem; 
-  padding: 6px 0; 
-  border-bottom: 1px solid rgba(255,255,255,0.03); 
-}
-
-.ping-row span:last-child { 
-  font-weight: 700; 
-  color: var(--accent-cyan); 
-}
-
-.fixes-panel { 
-  display: none; 
-  opacity: 0; 
-  transform: translateY(50px); 
-  transition: all 0.8s ease; 
-  margin-top: 20px; 
-}
-
-.fixes-panel.show { 
-  display: block; 
-  opacity: 1; 
-  transform: translateY(0); 
-}
-
-.fix-card { 
-  background: var(--card-bg); 
-  border: 1px solid var(--card-border); 
-  border-radius: 12px; 
-  padding: 16px 20px; 
-  margin-bottom: 12px; 
-  display: flex; 
-  align-items: center; 
-  justify-content: space-between; 
-  opacity: 0; 
-  transform: translateY(20px); 
-  transition: all 0.5s ease; 
-  backdrop-filter: blur(10px); 
-}
-
-.fix-card.visible { 
-  opacity: 1; 
-  transform: translateY(0); 
-}
-
-.fix-info { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 4px; 
-}
-
-.fix-title { 
-  font-size: 0.95rem; 
-  font-weight: 700; 
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
-}
-
-.fix-desc { 
-  font-size: 0.8rem; 
-  color: var(--text-secondary); 
-}
-
-.badge { 
-  padding: 3px 8px; 
-  border-radius: 4px; 
-  font-size: 0.65rem; 
-  font-weight: 800; 
-  text-transform: uppercase; 
-}
-
-.badge-major { 
-  background: rgba(239, 68, 68, 0.2); 
-  color: var(--accent-red); 
-  border: 1px solid var(--accent-red); 
-}
-
-.badge-minor { 
-  background: rgba(245, 158, 11, 0.2); 
-  color: var(--accent-amber); 
-  border: 1px solid var(--accent-amber); 
-}
-
-.badge-minimal { 
-  background: rgba(16, 185, 129, 0.2); 
-  color: var(--accent-green); 
-  border: 1px solid var(--accent-green); 
-}
-
-.badge-kernel { 
-  background: rgba(0, 242, 254, 0.2); 
-  color: var(--accent-cyan); 
-  border: 1px solid var(--accent-cyan); 
-}
-
-.switch { 
-  position: relative; 
-  display: inline-block; 
-  width: 44px; 
-  height: 24px; 
-}
-
-.switch input { 
-  opacity: 0; 
-  width: 0; 
-  height: 0; 
-}
-
-.slider { 
-  position: absolute; 
-  cursor: pointer; 
-  top: 0; 
-  left: 0; 
-  right: 0; 
-  bottom: 0; 
-  background-color: rgba(255,255,255,0.1); 
-  transition: .3s; 
-  border-radius: 24px; 
-  border: 1px solid var(--card-border); 
-}
-
-.slider:before { 
-  position: absolute; 
-  content: ""; 
-  height: 16px; 
-  width: 16px; 
-  left: 3px; 
-  bottom: 3px; 
-  background-color: white; 
-  transition: .3s; 
-  border-radius: 50%; 
-}
-
-input:checked + .slider { 
-  background-color: var(--accent-cyan); 
-}
-
-input:checked + .slider:before { 
-  transform: translateX(20px); 
-  background-color: #000; 
-}
-
-.script-drawer { 
-  background: var(--console-bg); 
-  border: 1px solid var(--card-border); 
-  border-radius: 12px; 
-  padding: 20px; 
-  margin-top: 24px; 
-}
-
-.script-header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  margin-bottom: 12px; 
-}
-
-.script-header h3 { 
-  font-size: 0.9rem; 
-  font-weight: 700; 
-  color: #fff; 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
-}
-
-.tab-container { 
-  display: flex; 
-  gap: 8px; 
-  margin-bottom: 12px; 
-}
-
-.tab-btn { 
-  background: rgba(255,255,255,0.05); 
-  color: var(--text-secondary); 
-  border: 1px solid var(--card-border); 
-  padding: 6px 16px; 
-  border-radius: 6px; 
-  font-size: 0.8rem; 
-  cursor: pointer; 
-  font-weight: 600; 
-}
-
-.tab-btn.active { 
-  background: var(--accent-cyan); 
-  color: #000; 
-  border-color: var(--accent-cyan); 
-}
-
-textarea.script-code { 
-  width: 100%; 
-  height: 200px; 
-  background: rgba(0,0,0,0.5); 
-  border: 1px solid var(--card-border); 
-  color: #38BDF8; 
-  font-family: 'Consolas', monospace; 
-  font-size: 0.8rem; 
-  padding: 12px; 
-  border-radius: 8px; 
-  resize: vertical; 
-  outline: none; 
-  margin-bottom: 12px; 
-  line-height: 1.4; 
-}
-
-.btn { 
-  background: var(--accent-cyan); 
-  color: #000; 
-  border: none; 
-  padding: 10px 20px; 
-  font-weight: 800; 
-  font-size: 0.85rem; 
-  border-radius: 6px; 
-  cursor: pointer; 
-  transition: all 0.2s ease; 
-  display: inline-flex; 
-  align-items: center; 
-  gap: 8px; 
-}
-
-.btn:hover { 
-  background: var(--accent-blue); 
-  color: #fff; 
-  box-shadow: 0 0 15px rgba(79, 172, 254, 0.4); 
-}
-
-.btn-secondary { 
-  background: var(--card-border); 
-  color: #fff; 
-}
-
-.btn-secondary:hover { 
-  background: #334155; 
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Diagnostics & Speedtest</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glow-bg"></div>
+
+  <header>
+    <div class="brand">
+      SPEEDTEST <span>PRO</span>
+    </div>
+    <div class="status-badge">
+      <div class="status-dot"></div> Online
+    </div>
+  </header>
+
+  <main>
+    <section class="hud-meta">
+      <div class="hud-ip">192.168.1.1</div>
+      <div class="hud-isp">
+        Spectrum Gbps Connection
+        <button class="info-btn" onclick="document.querySelector('.drawer').classList.toggle('open')">Details</button>
+      </div>
+
+      <div class="drawer">
+        <div class="drawer-grid">
+          <div class="drawer-item">
+            <div>Interface</div>
+            <div>eth0</div>
+          </div>
+          <div class="drawer-item">
+            <div>Gateway</div>
+            <div>192.168.1.254</div>
+          </div>
+          <div class="drawer-item">
+            <div>DNS Resolver</div>
+            <select class="drawer-select">
+              <option>1.1.1.1 (Cloudflare)</option>
+              <option>8.8.8.8 (Google)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stage-container" id="stage">
+      <div class="go-btn-wrap">
+        <button class="go-btn" id="goBtn">
+          GO
+          <div class="go-sub">START TEST</div>
+        </button>
+      </div>
+
+      <div class="metrics-panel">
+        <div class="metric-card">
+          <div class="metric-title">Download</div>
+          <div class="metric-val">940.5 <span>Mbps</span></div>
+          <svg class="sparkline-svg" viewBox="0 0 100 40">
+            <path class="sparkline-path" d="M0 30 Q 25 5, 50 20 T 100 10" />
+          </svg>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Upload</div>
+          <div class="metric-val">880.2 <span>Mbps</span></div>
+          <svg class="sparkline-svg" viewBox="0 0 100 40">
+            <path class="sparkline-path" d="M0 35 Q 25 15, 50 25 T 100 5" />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="terminal-wrap">
+      <div class="terminal-header">
+        <span>CONSOLE LOG</span>
+        <span>bash</span>
+      </div>
+      <textarea class="console" readonly>[INFO] Initializing latency probe...&#10;[INFO] Target connected via eth0.&#10;[INFO] Ready for throughput profiling.</textarea>
+    </section>
+
+    <section class="diag-grid">
+      <div class="diag-card">
+        <div class="diag-title">
+          <span>Ping Latency</span>
+          <span>Optimal</span>
+        </div>
+        <div class="ping-row">
+          <span>Cloudflare (1.1.1.1)</span>
+          <span>7 ms</span>
+        </div>
+        <div class="ping-row">
+          <span>Google (8.8.8.8)</span>
+          <span>11 ms</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="fixes-panel show">
+      <div class="fix-card visible">
+        <div class="fix-info">
+          <div class="fix-title">
+            TCP BBR Congestion Control
+            <span class="badge badge-kernel">Kernel</span>
+          </div>
+          <div class="fix-desc">Optimizes throughput and latency under packet loss.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="script-drawer">
+      <div class="script-header">
+        <h3>Network Optimization Script</h3>
+      </div>
+      <div class="tab-container">
+        <button class="tab-btn active">Linux</button>
+        <button class="tab-btn">Windows</button>
+      </div>
+      <textarea class="script-code" readonly># Apply Kernel Optimizations&#10;sysctl -w net.ipv4.tcp_congestion_control=bbr&#10;sysctl -w net.core.rmem_max=16777216</textarea>
+      <button class="btn">Apply Optimizations</button>
+      <button class="btn btn-secondary">Reset</button>
+    </section>
+  </main>
+</body>
+</html>
